@@ -210,6 +210,151 @@ If no temperature is specified or an adiabatic line command is used, a zero flux
 If a value is specified for each quantity within the wall boundary condition block, a Dirichlet condition
 is applied. If no values are specified, a zero flux condition is applied.
 
+\subsection{Atmospheric Boundary Layer Surface Conditions}
+\subsubsection{Monin-Obukhov Theory}
+Consider atmospheric flow over a flat but non-smooth surface; the
+coordinate system convention is that flow is along the $x$-axis, while
+the $z$-axis is oriented normal to the surface.  The surface layer is
+the relatively thin layer near the surface where strong wind and
+temperature gradients exist.  Turbulence within this layer can be
+generated through mechanisms of both shear and thermal convection; the
+relative contributions of these two mechanisms is determined by the
+stability state of the atmosphere.  The stability state is
+characterized by the Monin-Obukhov length:
+\begin{equation}
+ L = - \frac{u_*^3 \theta_{ref}}{\kappa g (\overline{w^\prime
+     \theta^\prime})_s};
+\end{equation}
+$u_*$ is the friction velocity, defined as the
+square root of the magnitude of the Reynolds shear stress at
+the surface, or
+\begin{equation}
+ u_* = \left( \overline{w^\prime u^\prime}^2 + \overline{w^\prime
+   u^\prime}^2 \right)^{1/4} = \sqrt{\frac{\tau_s}{\rho_s}}
+\end{equation}
+$\theta_{ref}$ is a reference (virtual potential) temperature associated with the air
+within the surface layer; for example, the average temperature within
+the surface layer.  $\kappa \approx 0.41$ is the von Karman constant,
+and $g$ is the acceleration of gravity.  $\overline{w^\prime
+     \theta^\prime}_s$ is the surface turbulent temperature flux.  Both the
+turbulent shear stress and turbulent temperature flux are approximately
+constant within the surface layer.
+
+Applying a gradient diffusion model for the turbulent temperature flux leads to:
+\begin{equation}
+ \overline{w^\prime \theta^\prime}_s = -k_T \pd{\theta}{z}
+\end{equation}.
+The sign of $L$ is then connected to the sign of the temperature
+gradient within the surface layer.  Three regimes are delineated:
+\begin{itemize}
+  \item $\frac{1}{L} > 0, \quad \pd{\theta}{z} > 0$~~~stable
+    stratification
+  \item $\frac{1}{L} = 0, \quad \pd{\theta}{z} = 0$~~~neutral
+    stratification
+  \item $\frac{1}{L} < 0, \quad \pd{\theta}{z} < 0$~~~unstable stratification
+\end{itemize}
+
+Monin-Obukhov theory postulates the following similarity laws for mean
+velocity parallel to the surface and temperature,
+\begin{equation} \label{dudz}
+\frac{\kappa z}{u_*}\pd{\overline{u}_{||}}{z} =
+\phi_m\left(\frac{z}{L}\right),
+\end{equation}
+\begin{equation} \label{dTdz}
+\frac{\kappa z u_*}{\overline{w^\prime \theta^\prime}_s}
+\pd{\overline{\theta}}{z} = \phi_h\left(\frac{z}{L}\right),
+\end{equation}
+where the forms of the non-dimensional functions $\phi_m$ and $\phi_h$ are determined
+from empirical observations. Analytical functions have been fit to the
+data; these are not given here, rather, we present the integrated form
+of (\ref{dudz}) and (\ref{dTdz}), since these are the forms required
+by the code implementation.
+
+For neutral stratification, $\phi_m = 1$ and we recover the
+logarithmic profile for a ``fully rough'' surface,
+\begin{equation} \label{vel_neutral}
+\overline{u}_{||}(z) = \frac{u_*}{\kappa}\ln\frac{z}{z_0},
+\end{equation}
+where $z_0$ is the characteristic roughness height.  Note that viscous
+scaling involving surface viscosity and density properties is not
+required with this form of the logarithmic profile, since the
+roughness height is large enough to eliminate the presence of a
+laminar sublayer and buffer layer.
+
+For stable stratification, the surface layer profiles take the form
+\begin{equation} \label{vel_stable}
+ \overline{u}_{||}(z) = \frac{u_*}{\kappa}\left(\ln\frac{z}{z_0} +
+ \gamma_m\frac{z}{L}\right)
+\end{equation}
+\begin{equation}  \label{temp_stable}
+\overline{\theta}(z) = \overline{\theta}(z_0) +
+\frac{\theta_*}{\kappa} \left(\alpha_h\ln\frac{z}{z_0} +
+\gamma_h\frac{z}{L}\right)
+\end{equation}
+$\theta_*$ is calculated from the temperature flux and friction velocity as
+$\theta_* = -\frac{\overline{w^\prime \theta^\prime}_s}{u_*}$, and
+$\gamma_m$, $\alpha_h$, and $\gamma_h$ are constants specified below.
+
+For unstable stratification, the surface layer profiles take the form
+\begin{equation} \label{vel_unstable}
+  \overline{u}_{||}(z) = \frac{u_*}{\kappa}\left(\ln\frac{z}{z_0} -
+  \psi_m\left(\frac{z}{L}\right)\right)
+\end{equation}
+\begin{equation} \label{temp_unstable}
+  \overline{\theta}(z) = \overline{\theta}(z_0) +
+  \alpha_h\frac{\theta_*}{\kappa}\left(\ln\frac{z}{z_0} -
+  \psi_h\left(\frac{z}{L}\right)\right)
+\end{equation}
+where
+\begin{equation} \label{psi_m}
+ \psi_m\left(\frac{z}{L}\right) = 2\ln\frac{1 + x}{2} + \ln\frac{1 + x^2}{2} - 2\tan^{-1}x +
+ \frac{\pi}{2}, \quad x = \left(1 - \beta_m\frac{z}{L}\right)^{1/4},
+\end{equation}
+\begin{equation} \label{psi_h}
+ \psi_h\left(\frac{z}{L}\right) = \ln\frac{1 + y}{2}, \quad y = \left(1 -
+ \beta_h\frac{z}{L}\right)^{1/2}.
+\end{equation}
+
+The constants used in (\ref{vel_stable}) -- (\ref{psi_h}) are \cite{Dyer:74}
+\begin{equation}
+  \kappa = 0.41,~~\alpha_h =
+  1,~~\beta_m=16,~~\beta_h=16,~~\gamma_m=5.0,~~\gamma_h=5.0.
+\end{equation}
+
+\subsubsection{ABL Wall Function}
+The equations from the preceeding section can be used to formulate a
+wall function boundary condition for simulation of atmospheric
+boundary layers.  The user-specified inputs to this boundary condition
+are: roughness length, $z_0$, and surface heat flux, $q_s =
+\rho C_p \overline{w^\prime \theta^\prime})_s$.  The surface layer profile
+model is evaluated for each surface boundary flux integration point;
+the wall-normal distance of the ``first point off the wall'' is taken
+to be one fourth of the length of the nearest edge intersecting the
+boundary face.  The boundary condition is specified weakly through the
+imposition of a surface shear stress and surface heat flux.
+
+The procedure for applying the boundary condition is as follows.
+\begin{enumerate}
+\item Determine the stratification state of the boundary layer by
+  calculating the sign of the Monin-Obukhov length scale.
+\item Solve the appropriate profile equation, either
+  (\ref{vel_neutral}), (\ref{vel_stable}), or (\ref{vel_unstable}),
+  for the friction velocity $u_*$.  For the neutral case, $u*$ can be
+  solved for directly.  For the stable and unstable cases, $u*$ must
+  be solved for iteratively because $L$ appears in these equations and
+  $L$ depends on $u_*$.
+\item The surface shear stress is calculated as $\tau_s = \rho_s u_*^2$.
+  For calculating left-hand-side Jacobian entries, the form $\tau_s =
+  \lambda_s u_{||}$ is useful. This form can be found by algebraic
+  manipulation of the relevant velocity profile equation.
+\item The user specified surface heat flux is applied to the enthalpy
+  equation.  Evaluation of surface temperature is not required for
+  the boundary condition specification.  However, if surface
+  temperature is required for evaluation of other quantities within
+  the code, the appropriate surface layer temperature profile should
+  be used, either (\ref{temp_stable}) or (\ref{temp_unstable}).
+\end{enumerate}
+
 \subsection{Turbulent Kinetic Energy, $k_{sgs}$ LES model}
 When the boundary layer is assumed to be resolved, the natural boundary condition is a Dirichlet value of zero, 
 $k_{sgs} = 0$. 
