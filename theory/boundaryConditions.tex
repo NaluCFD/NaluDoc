@@ -222,14 +222,14 @@ relative contributions of these two mechanisms is determined by the
 stability state of the atmosphere.  The stability state is
 characterized by the Monin-Obukhov length:
 \begin{equation}
- L = - \frac{u_*^3 \theta_{ref}}{\kappa g (\overline{w^\prime
+ L = - \frac{u_\tau^3 \theta_{ref}}{\kappa g (\overline{w^\prime
      \theta^\prime})_s};
 \end{equation}
-$u_*$ is the friction velocity, defined as the
+$u_\tau$ is the friction velocity, defined as the
 square root of the magnitude of the Reynolds shear stress at
 the surface, or
 \begin{equation}
- u_* = \left( \overline{w^\prime u^\prime}^2 + \overline{w^\prime
+ u_\tau = \left( \overline{w^\prime u^\prime}^2 + \overline{w^\prime
    u^\prime}^2 \right)^{1/4} = \sqrt{\frac{\tau_s}{\rho_s}}
 \end{equation}
 $\theta_{ref}$ is a reference (virtual potential) temperature associated with the air
@@ -257,11 +257,11 @@ gradient within the surface layer.  Three regimes are delineated:
 Monin-Obukhov theory postulates the following similarity laws for mean
 velocity parallel to the surface and temperature,
 \begin{equation} \label{dudz}
-\frac{\kappa z}{u_*}\pd{\overline{u}_{||}}{z} =
+\frac{\kappa z}{u_\tau}\pd{\overline{u}_{||}}{z} =
 \phi_m\left(\frac{z}{L}\right),
 \end{equation}
 \begin{equation} \label{dTdz}
-\frac{\kappa z u_*}{\overline{w^\prime \theta^\prime}_s}
+\frac{\kappa z u_\tau}{\overline{w^\prime \theta^\prime}_s}
 \pd{\overline{\theta}}{z} = \phi_h\left(\frac{z}{L}\right),
 \end{equation}
 where the forms of the non-dimensional functions $\phi_m$ and $\phi_h$ are determined
@@ -273,7 +273,7 @@ by the code implementation.
 For neutral stratification, $\phi_m = 1$ and we recover the
 logarithmic profile for a ``fully rough'' surface,
 \begin{equation} \label{vel_neutral}
-\overline{u}_{||}(z) = \frac{u_*}{\kappa}\ln\frac{z}{z_0},
+\overline{u}_{||}(z) = \frac{u_\tau}{\kappa}\ln\frac{z}{z_0},
 \end{equation}
 where $z_0$ is the characteristic roughness height.  Note that viscous
 scaling involving surface viscosity and density properties is not
@@ -283,7 +283,7 @@ laminar sublayer and buffer layer.
 
 For stable stratification, the surface layer profiles take the form
 \begin{equation} \label{vel_stable}
- \overline{u}_{||}(z) = \frac{u_*}{\kappa}\left(\ln\frac{z}{z_0} +
+ \overline{u}_{||}(z) = \frac{u_\tau}{\kappa}\left(\ln\frac{z}{z_0} +
  \gamma_m\frac{z}{L}\right)
 \end{equation}
 \begin{equation}  \label{temp_stable}
@@ -292,12 +292,12 @@ For stable stratification, the surface layer profiles take the form
 \gamma_h\frac{z}{L}\right)
 \end{equation}
 $\theta_*$ is calculated from the temperature flux and friction velocity as
-$\theta_* = -\frac{\overline{w^\prime \theta^\prime}_s}{u_*}$, and
+$\theta_* = -\frac{\overline{w^\prime \theta^\prime}_s}{u_\tau}$, and
 $\gamma_m$, $\alpha_h$, and $\gamma_h$ are constants specified below.
 
 For unstable stratification, the surface layer profiles take the form
 \begin{equation} \label{vel_unstable}
-  \overline{u}_{||}(z) = \frac{u_*}{\kappa}\left(\ln\frac{z}{z_0} -
+  \overline{u}_{||}(z) = \frac{u_\tau}{\kappa}\left(\ln\frac{z}{z_0} -
   \psi_m\left(\frac{z}{L}\right)\right)
 \end{equation}
 \begin{equation} \label{temp_unstable}
@@ -339,11 +339,11 @@ The procedure for applying the boundary condition is as follows.
   calculating the sign of the Monin-Obukhov length scale.
 \item Solve the appropriate profile equation, either
   (\ref{vel_neutral}), (\ref{vel_stable}), or (\ref{vel_unstable}),
-  for the friction velocity $u_*$.  For the neutral case, $u*$ can be
+  for the friction velocity $u_\tau$.  For the neutral case, $u*$ can be
   solved for directly.  For the stable and unstable cases, $u*$ must
   be solved for iteratively because $L$ appears in these equations and
-  $L$ depends on $u_*$.
-\item The surface shear stress is calculated as $\tau_s = \rho_s u_*^2$.
+  $L$ depends on $u_\tau$.
+\item The surface shear stress is calculated as $\tau_s = \rho_s u_\tau^2$.
   For calculating left-hand-side Jacobian entries, the form $\tau_s =
   \lambda_s u_{||}$ is useful. This form can be found by algebraic
   manipulation of the relevant velocity profile equation.
