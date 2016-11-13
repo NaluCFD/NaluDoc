@@ -43,16 +43,20 @@ The classic Peclet functional form makes it difficult to dial in the exact
 point at which the Peclet factor transitions from pure upwind to pure central. 
 Therefore, an alternative form is provided that has a hyperbolic tangeant 
 functional form. This form allows one to specify the transition point and 
-the width of the transition (see Equation~\ref{tanhPF}).
-The tanh form is as follows,
+the width of the transition (see Equation~\ref{tanhGen}).
+The general tanh form is as follows,
 \begin{equation}
-  \eta = \frac {\frac {1}{2}[1+tanh(\frac{\rm Pe - c_{trans}}{c_{width}})] -\lambda}{\delta}.
-\label{tanhPF}
+  \eta = \frac {1}{2}[(a+b) + (b-a)tanh(\frac{\rm Pe - c_{trans}}{c_{width}})].
+\label{tanhGen}
 \end{equation}
 Above, the constant $c_{trans}$ represents the transition Peclet number while $c_{width}$ represents the width of 
-the transition. The value of $\lambda$ is simply the shift between of the raw tanh function
-from zero while $\delta$ is the difference between the max Peclet factor (unity) and the minimum value
-prior to normalization. This approach ensures that the function starts at zero and asymptotes to unity. 
+the transition. The constants $a$ and $b$ represent the interval bounds of the functional tanh form. In the 
+Nalu formulation, the interval ranges between zero and unity. This approach ensures that the function 
+starts at zero and asymptotes to unity,
+\begin{equation}
+  \eta = \frac {1}{2}[1+tanh(\frac{\rm Pe - c_{trans}}{c_{width}})].
+\label{tanhCode}
+\end{equation}
 
 The cell-Peclet number is computed for each sub-face in the element
 from the two adjacent left (L) and right (R) nodes,
