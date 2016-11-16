@@ -82,7 +82,8 @@ a code verification result for a steady thermal manufactured solution comparing 
 
 \begin{figure}
 \centerline{\includegraphics[width=0.8\textwidth]{figures/ho_heatCondMMM_dtdx.pdf}}
-\caption{Error norms as a function of mesh size for a CMM and LMM projected nodal gradient on a quadratic tquad mesh.}
+\caption{Error norms as a function of mesh size for a CMM and LMM projected 
+nodal gradient on a quadratic tquad mesh.}
 \label{fig:pngTempMMS}
 \end{figure}
 
@@ -93,7 +94,8 @@ Again, dirichlet (inflow) and periodic domains display the same order of converg
 
 \begin{figure}
 \centerline{\includegraphics[width=0.8\textwidth]{figures/ho_stvUandDpDx.pdf}}
-\caption{Error norms as a function of mesh size for the Steady Taylor Vortex momentum and pressure gradient field.}
+\caption{Error norms as a function of mesh size for the Steady Taylor Vortex 
+momentum and pressure gradient field.}
 \label{fig:hoSTVMMS}
 \end{figure}
 
@@ -172,3 +174,47 @@ and air, respectively.
 Edge- and element-based discretization (P=1) demonstrate second order convergence
 in the $L_2$ norm for u, v, w and mixture fraction. This test is captured within the 
 variableDensityMMS regression test suite.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{2D Steady Laplace Operator}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The evaluation of the low-Mach Laplace (or diffusion operator) is of great interest to the core supported application
+space. Although the application space for Nalu is characterized by a highly turbulent flow, the usage of an approximate 
+pressure projection scheme always makes the chosen Laplace form important. Although the element-based scheme is expected 
+to be accurate, it can be problematic on high aspect ratio meshes as element-based schemes are not gauranteed to be monotonic 
+for aspect ratios as low as $sqrt(2)$ for FEM-based schemes and $sqrt(3)$ for CVEM-based approaches (both when using standard 
+Gauss point locations). Conversely, while the edge-based operator is accurate on high aspect ratio meshes, it suffers on skewed 
+meshes due to both quadrature error and the inclusion of a non orthogonal correction (NOC). For more information on the core 
+operators, please refer to the theory manaual.
+
+In order to assess the accuracy of the Laplace operator, a the two-dimensional MMS temperature solution 
+is used. The functional temperature field takes on the following form:
+
+\begin{equation}
+  T = \frac{\lambda}{4} (cos(2 a \pi x) + cos(2 a \pi y)).
+\label{advConvTV_u}
+\end{equation}
+
+The above manufactured solution is run on three meshes of domain size of 1x1. The domain was first meshed as a triangular mesh and
+then converted to a tquad4 mesh. Therefore, non orthogonal correction (NOC) effects are expected for the edge-based scheme. 
+In this study, both $\lambda$ and $a$ are unity. Either periodic or Dirichlet conditions are used for boundary conditions. 
+
+The simulation is run with the following diffusion operators: 1) the standard CVFEM operator, 2) the edge-based
+operator with CVFEM projected nodal gradients (NOC), 3) the edge-based operator with edge-based projected nodal gradients (NOC),
+4) the edge-based operator without NOC correction, 5) the CVFEM operator with shifted integration points to the edge, and, lastly, 
+6) a mixed edge/element scheme in which the orthogonal diffuion operator is edge-based while the NOC terms are based on the elemental 
+CVFEM gradient at the standard subcontrol surface integration points.
+
+The last operator is interesting in that it represents a candidate operator for the CVFEM pressure Poisson system when high aspect ratio 
+meshes are used. Figure~\ref{fig:laplaceTquad} outlines the convergence of the five above operators; shown are all of the standard 
+norms (infinity, 1 and 2). The results indicate that the edge-based scheme with NOC retains second-order convergence for all norms 
+when the more accurate CVFEM projected nodal gradient is used. Convergence is degraded with the edge-based scheme when NOC terms 
+are either neglected or use the reduced edge-based projected nodal gradient. The CVFEM-based methods are second order accurate 
+in the $L_1$ and $L_2$ norms, however, questionable results are noted in the $L_{oo}$ norm. Shifting the Gauss points from the standard 
+subcontrol surface to the edges of the element (while still using shape function derivatives) is only problematic in the $L_{oo}$ norm.
+
+\begin{figure}
+\centerline{\includegraphics[width=0.8\textwidth]{figures/tquadLaplaceMMS.pdf}}
+\caption{Error norms in temperature field as a function of normalized element count for a two-dimensional tquad4 mesh}
+\label{fig:laplaceTquad}
+\end{figure}
