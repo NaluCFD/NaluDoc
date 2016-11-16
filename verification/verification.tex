@@ -206,15 +206,36 @@ operator with CVFEM projected nodal gradients (NOC), 3) the edge-based operator 
 CVFEM gradient at the standard subcontrol surface integration points.
 
 The last operator is interesting in that it represents a candidate operator for the CVFEM pressure Poisson system when high aspect ratio 
-meshes are used. Figure~\ref{fig:laplaceTquad} outlines the convergence of the five above operators; shown are all of the standard 
-norms (infinity, 1 and 2). The results indicate that the edge-based scheme with NOC retains second-order convergence for all norms 
-when the more accurate CVFEM projected nodal gradient is used. Convergence is degraded with the edge-based scheme when NOC terms 
+meshes are used. Figure~\ref{fig:laplaceTquad} (a) outlines the convergence of the five above operators; shown are all of the standard 
+norms (infinity, 1 and 2) for the R0, R1 and R2 mesh refinements. The results in the left side of the figure indicate that the edge-based scheme with NOC retains second-order 
+convergence for all norms when the more accurate CVFEM projected nodal gradient is used. Convergence is degraded with the edge-based scheme when NOC terms 
 are either neglected or use the reduced edge-based projected nodal gradient. The CVFEM-based methods are second order accurate 
 in the $L_1$ and $L_2$ norms, however, questionable results are noted in the $L_{oo}$ norm. Shifting the Gauss points from the standard 
 subcontrol surface to the edges of the element (while still using shape function derivatives) is only problematic in the $L_{oo}$ norm.
+Figure~\ref{fig:laplaceTquad} (b) outlines two more refinement meshes for the CVFEM operator (R3 and R4). Results indicate that the $L_{oo}$
+norm is approaching second order accuracy.
 
 \begin{figure}
-\centerline{\includegraphics[width=0.8\textwidth]{figures/tquadLaplaceMMS.pdf}}
-\caption{Error norms in temperature field as a function of normalized element count for a two-dimensional tquad4 mesh}
-\label{fig:laplaceTquad}
+  \centering
+  \subfigure[R0, R1, and R2 refinement.]
+  {
+    \centerline{\includegraphics[width=0.8\textwidth]{figures/tquadLaplaceMMS.pdf}}
+  }
+  \subfigure [R0, R1, R2, R3, R4, and R4 refinementError for CVFEM.]
+  {
+    \centerline{\includegraphics[width=0.8\textwidth]{figures/tquadLaplaceMMSCVFEM.pdf}}
+  }
+  \vspace{0.1in}
+  \caption{Error norms for tquad4 refinement study.}
+  \label{fig:laplaceTquad}
+\end{figure}
+
+An inspection of the magnitude of error between the exact and computed temperature for the R3 mesh is shown in Figure~\ref{fig:tquadTdiff}.
+Results show that the CVFEM error is highest at the corner mesh nodes that form a reduced stencil. The edge-based scheme shows increased error
+at the higher aspect ratio dual mesh. 
+
+\begin{figure}
+\centerline{\includegraphics[width=0.8\textwidth]{figures/tquadEdgeCvfemTdiff.pdf}}
+\caption{Magnitude of the $L_{oo}$ temperature norm comparing the edge-based CVFEM (NOC) and standard CVFEM operators on the R3 mesh.}
+\label{fig:tquadTdiff}
 \end{figure}
