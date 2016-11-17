@@ -38,7 +38,10 @@ known as the standard incremental pressure, approximate pressure projection sche
 
 Two other pressure projection schemes have been evaluated in this study. Each represent a 
 simplification of the standard pressure projection scheme. Figure~\ref{fig:hybridTstep} outlines
-three projection schemes: the first is when the projected nodal gradient appearing in the fourth-order pressure stabilization is lagged while the second is the classic pressure-free pressure approximate projection scheme with second order pressure stabilization. The third is the baseline fourth-order incremental pressure projection scheme. The error plots demonstrate that lagging the projected nodal gradient for pressure retains second order accuracy. However, as expected the pressure
+three projection schemes: the first is when the projected nodal gradient appearing in the fourth-order pressure stabilization 
+is lagged while the second is the classic pressure-free pressure approximate projection scheme with second order pressure stabilization. 
+The third is the baseline fourth-order incremental pressure projection scheme. The error plots demonstrate that lagging the projected nodal 
+gradient for pressure retains second order accuracy. However, as expected the pressure
 free pressure projection scheme is confirmed to be first order accurate given the first order splitting error noted in this fully implicit momentum solve.
 
 The Steady Taylor Vortex will be used to verify the spatial accuracy for the full set of advection
@@ -184,8 +187,7 @@ pressure projection scheme always makes the chosen Laplace form important. Altho
 to be accurate, it can be problematic on high aspect ratio meshes as element-based schemes are not gauranteed to be monotonic 
 for aspect ratios as low as $sqrt(2)$ for FEM-based schemes and $sqrt(3)$ for CVEM-based approaches (both when using standard 
 Gauss point locations). Conversely, while the edge-based operator is accurate on high aspect ratio meshes, it suffers on skewed 
-meshes due to both quadrature error and the inclusion of a non orthogonal correction (NOC). For more information on the core 
-operators, please refer to the theory manaual.
+meshes due to both quadrature error and the inclusion of a non orthogonal correction (NOC). 
 
 In order to assess the accuracy of the Laplace operator, a the two-dimensional MMS temperature solution 
 is used. The functional temperature field takes on the following form:
@@ -199,21 +201,54 @@ The above manufactured solution is run on three meshes of domain size of 1x1. Th
 then converted to a tquad4 mesh. Therefore, non orthogonal correction (NOC) effects are expected for the edge-based scheme. 
 In this study, both $\lambda$ and $a$ are unity. Either periodic or Dirichlet conditions are used for boundary conditions. 
 
-The simulation is run with the following diffusion operators: 1) the standard CVFEM operator, 2) the edge-based
+
+A brief overview of the diffusion operator tested is now provided. For more details, consult the theory manual. The general 
+diffusion kernel is as follows:
+
+\begin{equation}
+ -\int \Gamma \frac{\partial \phi}{\partial x_j} A_j.
+\label{diffOp}
+\end{equation}
+
+The choice of the gradient operator at the integration point is a functin of the underlying method. For CVFEM,
+the gradient operator is provided by the standard shape function derivatives,
+\begin{equation}
+ \frac{\partial \phi_{ip}}{\partial x_j} = \sum \frac{\partial N^{ip}_{j,k}} {\partial x_j} \phi_k.
+\label{cvfemDerivative}
+\end{equation}
+For the edge-based scheme, a blending of an orthogonal gradient along the edge and a NOC is employed,
+\begin{equation}
+  \frac{\partial \phi_{ip}}{\partial x_j} = \bar{G_j\phi} + \left[ \left(\phi_R - \phi_L \right) 
+- \bar{G_l\phi}dx_l \right] \frac{A_j}{A_k dx_k}.
+\end{equation}
+\label{generalGrad}
+In the above equation, $G_j\phi$ is a projected nodal gradient. The general equation for this quantity is 
+\begin{equation}
+\int w_I G_j \phi {dV} = \int w_i \frac{\partial \phi}{\partial x_j}{dV}.
+\label{PNG}
+\end{equation}
+
+Possible forms of this include either lumped or consistent mass (the later requires a global equation solve) with
+either the full CVFEM stencil or the edge-based (reduced) stencil. The above equation can even be applied within 
+the element itself for a simple, local integration step that provides a piecewise constant gradient over the element.
+
+The simulation study is run with the following diffusion operators: 1) the standard CVFEM operator, 2) the edge-based
 operator with CVFEM projected nodal gradients (NOC), 3) the edge-based operator with edge-based projected nodal gradients (NOC),
 4) the edge-based operator without NOC correction, 5) the CVFEM operator with shifted integration points to the edge, and, lastly, 
 6) a mixed edge/element scheme in which the orthogonal diffuion operator is edge-based while the NOC terms are based on the elemental 
-CVFEM gradient at the standard subcontrol surface integration points.
+CVFEM gradient (either evaluated at the given integration point or integrated over the element for a piecewise constant form).
 
 The last operator is interesting in that it represents a candidate operator for the CVFEM pressure Poisson system when high aspect ratio 
 meshes are used. Figure~\ref{fig:laplaceTquad} (a) outlines the convergence of the five above operators; shown are all of the standard 
-norms (infinity, 1 and 2) for the R0, R1 and R2 mesh refinements. The results in the left side of the figure indicate that the edge-based scheme with NOC retains second-order 
-convergence for all norms when the more accurate CVFEM projected nodal gradient is used. Convergence is degraded with the edge-based scheme when NOC terms 
-are either neglected or use the reduced edge-based projected nodal gradient. The CVFEM-based methods are second order accurate 
-in the $L_1$ and $L_2$ norms, however, questionable results are noted in the $L_{oo}$ norm. Shifting the Gauss points from the standard 
-subcontrol surface to the edges of the element (while still using shape function derivatives) is only problematic in the $L_{oo}$ norm.
-Figure~\ref{fig:laplaceTquad} (b) outlines two more refinement meshes for the CVFEM operator (R3 and R4). Results indicate that the $L_{oo}$
-norm is approaching second order accuracy.
+norms (infinity, 1 and 2) for the R0, R1 and R2 mesh refinements. The results in the left side of the figure indicate that the edge-based 
+scheme with NOC retains second-order convergence for all norms when the more accurate CVFEM projected nodal gradient is used (lumped only tested 
+given its good results). Convergence is degraded with the edge-based scheme when NOC terms are either neglected or use the reduced edge-based 
+projected nodal gradient. The CVFEM-based methods are second order accurate in the $L_1$ and $L_2$ norms, however, questionable 
+results are noted in the $L_{oo}$ norm for all methods that include any shape function derivative for local or elemental piecwise constant 
+gradient operators. Shifting the Gauss points from the standard subcontrol surface to the edges of the element (while still using shape function derivatives) 
+is only problematic in the $L_{oo}$ norm (just as the standard CVFEM approach). The use of the mixed-approach with a piecewise constant gradient over the 
+element demonstrates the same behavior as when using the integration point CVFEM gradient operator. Figure~\ref{fig:laplaceTquad} (b) outlines two more refinement meshes 
+for the CVFEM operator (R3 and R4). Results indicate that the $L_{oo}$ norm is approaching second order accuracy.
 
 \begin{figure}
   \centering
