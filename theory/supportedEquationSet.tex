@@ -106,6 +106,42 @@ where LES closure models for the subgrid turbulent eddy viscosity
 $\mu_t$ are either the constant coefficient Smagorinsky, WALE or the constant 
 coefficient $k_{sgs}$ model (see the turbulence section).
 
+\subsubsection{Earth Coriolis Force}
+For simulation of large-scale atmospheric flows, the following Coriolis force
+term can be added to the right-hand-side of the momentum equation
+(\ref{fav-mom}):
+\begin{equation} \label{cor-term}
+  \int -2\bar{\rho}\epsilon_{ijk}\Omega_ju_k ~{\rm d}V.
+\end{equation}
+Here, $\Omega$ is the Earth's angular velocity vector, and
+$\epsilon_{ijk}$ is the Levi-Civita symbol denoting the cross product
+of the Earth's angular velocity with the local fluid velocity
+vector. Consider an ``East-North-Up'' coordinate system on the Earth's
+surface, with the domain centered on a latitude angle $\phi$ (changes
+in latitude within the computational domain are neglected). In this
+coordinate system, the integrand of (\ref{cor-term}), or the Coriolis
+acceleration vector, is
+\begin{equation} \label{cor-acc}
+  2 \bar{\rho} \omega
+  \begin{bmatrix} u_n \sin\phi - u_u \cos\phi \\
+                  -u_e \sin\phi \\
+                  u_e \cos\phi
+  \end{bmatrix},
+\end{equation}
+where $\omega \equiv ||\Omega||$.  Often, in geophysical flows it is
+assumed that the vertical component of velocity is small and that the
+vertical component of the acceleration is small relative to gravity,
+such that the terms containing $\cos\phi$ are neglected.  However,
+there is evidence that this so-called traditional approximation is not
+valid for some mesoscale atmospheric phenomena \cite{Gerkema_etal:08},
+and so the full Coriolis term is retained in Nalu.  The implementation
+proceeds by first finding the velocity vector in the East-North-Up
+coordinate system, then calculating the Coriolis acceleration vector
+(\ref{cor-acc}), then transforming this vector back to the model
+$x-y-z$ coordinate system.  The coordinate transformations are made
+using user-supplied North and East unit vectors given in the model
+coordinate system.
+ 
 \subsection{Filtered Mixture Fraction} \label{sec:filtered_Z}
 
 The optional quantity used to identify the chemical state is the mixture 
