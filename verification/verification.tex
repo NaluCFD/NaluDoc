@@ -38,9 +38,10 @@ known as the standard incremental pressure, approximate pressure projection sche
 
 Two other pressure projection schemes have been evaluated in this study. Each represent a 
 simplification of the standard pressure projection scheme. Figure~\ref{fig:hybridTstep} outlines
-three projection schemes: the first is when the projected nodal gradient appearing in the fourth-order pressure stabilization 
-is lagged while the second is the classic pressure-free pressure approximate projection scheme with second order pressure stabilization. 
-The third is the baseline fourth-order incremental pressure projection scheme. The error plots demonstrate that lagging the projected nodal 
+three projection schemes: the first is when the projected nodal gradient appearing in the fourth-order 
+pressure stabilization is lagged while the second is the classic pressure-free pressure approximate projection 
+scheme with second order pressure stabilization. The third is the baseline fourth-order incremental pressure projection 
+scheme. The error plots demonstrate that lagging the projected nodal 
 gradient for pressure retains second order accuracy. However, as expected the pressure
 free pressure projection scheme is confirmed to be first order accurate given the first order splitting error noted in this fully implicit momentum solve.
 
@@ -273,4 +274,43 @@ at the higher aspect ratio dual mesh.
 \centerline{\includegraphics[width=0.8\textwidth]{figures/tquadEdgeCvfemTdiff.pdf}}
 \caption{Magnitude of the $L_{oo}$ temperature norm comparing the edge-based CVFEM (NOC) and standard CVFEM operators on the R3 mesh.}
 \label{fig:tquadTdiff}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{3D Steady Laplace Operator with Nonconformal Interface}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+A three dimensional element-based verification study is provided to evaluate the DG-based CVFEM approach.
+
+\begin{equation}
+  T = \frac{\lambda}{4} (cos(2 a \pi x) + cos(2 a \pi y) + cos(2 a \pi z)).
+\label{3dT}
+\end{equation}
+
+Figure~\ref{fig:laplaceNC} represents the MMS field for temperature. The simulation study includes uniform 
+refinement of a first- and second-order CVFEM basis. Both temperature field and projected nodal gradient
+norms are of interest.
+
+\begin{figure}
+\centerline{\includegraphics[width=0.8\textwidth]{figures/dgNonconformalCVFEM_3dTempMMS_tempField.pdf}}
+\caption{MMS temperature field for nonconformal algorithm.}
+\label{fig:laplaceNC}
+\end{figure}
+
+Figure~\ref{fig:laplaceNCOC} (a) outlines the linear and quadratic basis. For P1, the CVFEM temperature field predicts 
+between second and first order while for P2, third order is recovered. When using a consistent mass matrix for 
+the projected nodal gradient, second order is noted, see Figure~\ref{fig:laplaceNCOC}, (b).
+
+\begin{figure}
+  \centering
+  \subfigure[Temperature norms for P1 and P2 elements.]
+  {
+    \centerline{\includegraphics[width=0.4\textwidth]{figures/dgNonconformalCVFEM_3dTempMMS_OoC.pdf}}
+  }
+  \subfigure [Projected nodal gradient norms for P1 and P2 elements.]
+  {
+    \centerline{\includegraphics[width=0.4\textwidth]{figures/dgNonconformalCVFEM_3dTempMMS_OoCPNG.pdf}}
+  }
+  \vspace{0.1in}
+  \caption{MMS order of accuracy for nonconformal algorithm.}
+  \label{fig:laplaceNCOC}
 \end{figure}
