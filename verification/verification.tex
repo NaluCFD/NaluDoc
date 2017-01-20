@@ -316,15 +316,15 @@ the projected nodal gradient, second order is noted, see Figure~\ref{fig:laplace
 \end{figure}
 
 Given the order of accuracy results for the P1 implementation, a linear patch test was run. The temperature 
-solution was simply, $T(x,y,z) = x + y + z$ with the analytical temperature gradient of unity. Table~\ref{tab:linearPatch} 
-demonstrates the results for a P1 CVFEM implementation.
+solution was simply, $T(x,y,z) = x + y + z$; all analytical temperature gradients are unity. Table~\ref{tab:linearPatch} 
+demonstrates the successful patch test results for a P1 CVFEM implementation.
 
 \begin{table}[h!]
   \centering
   \caption{Caption for the table.}
   \label{tab:linearPatch}
   \begin{tabular}{llll}
-    dof & Infinity Norm & One Norm & Two Norm\\
+    dof & Loo & L1 & L2 \\
     \hline
     temperature & 3.33067e-16 & 2.30077e-17 & 4.68103e-17\\
      dTdx & 4.13225e-13 & 9.06848e-15 & 1.98249e-14\\
