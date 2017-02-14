@@ -658,6 +658,20 @@ For low-order meshes with curved surface, faceting will occur. In this case, the
 not be (sign)-unity factors of each other. In this case, it may be adventageous to define the opposing 
 outward normal as, $n_j^B = -n_j^A$. 
 
+Domino,~\cite{Domino:2010} provided an overview of a FEM fluids implementation. In such a formulation, the
+interior penalty term appears, i.e.,
+
+\begin{equation} 
+   \int_{\Gamma_{AB}} \frac {\partial w^A}{\partial x_j} n_j \lambda (\phi^A-\phi^B) d\Gamma,
+\end{equation}
+and
+\begin{equation} 
+   \int_{\Gamma_{BA}} \frac {\partial w^B}{\partial x_j} n_j \lambda (\phi^B-\phi^A) d\Gamma.
+\end{equation}
+Although the sign of this term is often debated in the literature, the above set of expressions acts 
+to increase penalty term stencil to include the full element contribution. 
+As the CVFEM uses a piecewise-constant test function, this term is currently neglected.
+
 Average fluxes are computed based on the current and opposing integration point locations. The 
 appropriate DG terms are assembled as boundary conditions first with block $A$ integration 
 points as $current$ (integrations points for block B are $opposing$) and then with block $B$ 
