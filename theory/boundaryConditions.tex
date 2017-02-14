@@ -630,7 +630,7 @@ Equation~\ref{mdotA} also forms the continuity nonconformal boundary contributio
 
 With the substitution of $\eta$ to be unity, the effective convective term is as follows:
 \begin{equation} 
-        \int \rho \hat{u}_j \phi n_j^A dS^A = \dot m^A \frac{ (\dot m^A + |\dot m^A|) \phi^A +  (\dot m^A - |\dot m^A|)\phi^B}{2}.
+        \int \rho \hat{u}_j \phi n_j^A dS^A = \frac{ (\dot m^A + |\dot m^A|) \phi^A +  (\dot m^A - |\dot m^A|)\phi^B}{2}.
 \label{advectionAUPW}
 \end{equation}
 Note that this form reduces to a standard upwing operator.
@@ -705,8 +705,7 @@ note that the above written form does not upwind the advective flux, although th
 approach. In general, the advective term contains contributions from both elements identified at the interface, 
 specifically,
 
-Note that the mass flow rate form does not support a Robin-style form. The penalty coefficient for the mass 
-flow rate at the non-conformal boundary points is again a function of the 
+The penalty coefficient for the mass flow rate at the non-conformal boundary points is again a function of the 
 blended inverse length scale at the current and opposing element surface location. The form of the mass flow 
 rate above provides the continuity contribution and the form of the mass flow rate used in the scalar non-conformal
 flux contribution.
