@@ -141,7 +141,29 @@ coordinate system, then calculating the Coriolis acceleration vector
 $x-y-z$ coordinate system.  The coordinate transformations are made
 using user-supplied North and East unit vectors given in the model
 coordinate system.
- 
+
+\subsubsection{ABL Forcing Source Terms} \label{sec:abl-forcing}
+
+In LES simulations of wind plant atmospheric flows, it is often necessary to
+drive the flow a predetermined vertical velocity and/or temperature profile. In
+Nalu, this is achieved by adding appropriate source terms $\mathbf{S}_u$ to the
+momentum equations (\ref{fav-mom}). The present implementation can vary the
+source terms as a function of time and space using either a user-defined table
+of previously computed source terms (e.g., from a \emph{precursor} simulation or
+another model such as WRF), or compute the source term as a function of the
+transient flow solution using the following equation:
+\begin{align}
+  \label{eq:abl-mom-source}
+ \mathbf{S}_u^n &= \alpha_u \bar{\rho} \left( \frac{\mathbf{U}^n_\mathrm{ref} -
+                  \left<\mathbf{u}^n\right>}{\Delta t^n}\right)
+\end{align}
+where $\left<\mathbf{u}^n\right>$ is the horizontally averaged velocity at a
+given height and instance in time $t=t_n$, $\mathbf{U}^n_\mathrm{ref}$ are the desired
+velocities at the corresponding heights and time. The implementation allows the
+user to prescribe relaxation factors $\alpha_u$ for the source terms that are
+applied. Nalu uses a default value of $1.0$ for the relaxation factors if no
+values are defined in the input file during initialization.
+
 \subsection{Filtered Mixture Fraction} \label{sec:filtered_Z}
 
 The optional quantity used to identify the chemical state is the mixture 
