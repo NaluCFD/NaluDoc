@@ -339,14 +339,20 @@ The procedure for applying the boundary condition is as follows.
   calculating the sign of the Monin-Obukhov length scale.
 \item Solve the appropriate profile equation, either
   (\ref{vel_neutral}), (\ref{vel_stable}), or (\ref{vel_unstable}),
-  for the friction velocity $u_\tau$.  For the neutral case, $u*$ can be
-  solved for directly.  For the stable and unstable cases, $u*$ must
+  for the friction velocity $u_\tau$.  For the neutral case, $u_\tau$ can be
+  solved for directly.  For the stable and unstable cases, $u_\tau$ must
   be solved for iteratively because $L$ appears in these equations and
   $L$ depends on $u_\tau$.
 \item The surface shear stress is calculated as $\tau_s = \rho_s u_\tau^2$.
-  For calculating left-hand-side Jacobian entries, the form $\tau_s =
-  \lambda_s u_{||}$ is useful. This form can be found by algebraic
-  manipulation of the relevant velocity profile equation.
+  For calculating left-hand-side Jacobian entries, the following form
+  for the surface shear stress is used:
+  \begin{equation} \label{tau_s_useful}
+   \tau_{s_i} = \lambda_s u_{||_i} = \frac{\kappa\rho
+     u_\tau}{\log(z/z_0) - \psi^\prime (z/L)},
+  \end{equation}
+  where $\psi^\prime$ is zero for a neutral profile, $-\gamma_m z/L$
+  for a stable profile, and $\psi_h(z/L)$ for an unstable profile.
+  The Jacobian entries follow directly from this form.
 \item The user specified surface heat flux is applied to the enthalpy
   equation.  Evaluation of surface temperature is not required for
   the boundary condition specification.  However, if surface
@@ -354,6 +360,112 @@ The procedure for applying the boundary condition is as follows.
   the code, the appropriate surface layer temperature profile should
   be used, either (\ref{temp_stable}) or (\ref{temp_unstable}).
 \end{enumerate}
+
+\subsubsection{Moeng Wall Function}
+The Monin-Obukhov expressions only truly hold in a mean sense, and are not
+necessarily valid when used to specify an instantaneous value for the
+surface shear stress in a large eddy simulation. Moeng \cite{Moeng:84}
+developed a local surface stress condition that utilizes
+horizontally-averaged quantities, for which the M-O relationships are
+assumed to hold.  This boundary condition is derived by first assuming
+that the local tangential shear stress vector can be written using a
+drag law:
+\begin{equation} \label{draglaw}
+  \mathbf{\tau}_s  = C_D u_{{||}_p} \mathbf{u}_{{||}_p}
+\end{equation}
+Here, $C_D$ is the drag coefficient, $\mathbf{u}_{{||}_p}$ is the
+surface-tangential velocity vector evaluated at the near-surface
+discretization point, and $u_{{||}_p}$ denotes the magnitude of this
+velocity vector.
+
+An expression for $\tau_s$ is derived in the Appendix of Moeng \cite{Moeng:84}, by
+writing the velocity as the sum of a horizontally averaged mean
+component and a fluctuation about this mean:
+\begin{equation}
+  \mathbf{u}_{{||}_p} = \left< \mathbf{u}_{{||}_p} \right> +
+  \mathbf{u}_{{||}_p}^{\prime\prime}
+\end{equation}
+There are two main assumptions in the derivation.  The first is that
+the instantaneous version of the drag law~(\ref{draglaw}) is
+identical to the horizontally-averaged version.  The second assumption
+is\footnote{Or, at least, that the difference between these quantities
+  is small relative to other terms, see Moeng \cite{Moeng:84}.
+}
+\begin{equation}
+  u_{{||}_p}^{\prime\prime} \mathbf{u}_{{||}_p}^{\prime\prime} \approx
+  \left< u_{{||}_p}^{\prime\prime} \mathbf{u}_{{||}_p}^{\prime\prime}
+  \right>
+\end{equation}
+
+After algebraic manipulations, the resulting vector expression is
+\begin{equation} \label{moeng_bc}
+  \mathbf{\tau}_s = \left< \mathbf{\tau}_s \right> \left( \frac{u_{{||}_p}
+  \left< \mathbf{u}_{{||}_p} \right> +  \left< u_{{||}_p} \right>
+  \left[ \mathbf{u}_{{||}_p} - \left< \mathbf{u}_{{||}_p} \right>
+    \right]}{\left<  u_{{||}_p} \right> \left< \mathbf{u}_{{||}_p}
+    \right>}\right)
+\end{equation}
+
+The procedure to calculate the surface stress at a boundary
+integration point is as follows.
+
+\begin{enumerate}
+ \item Calculate the horizontally-averaged quantities
+   $\left<u_{{||}_p}\right>$ and $\left<\mathbf{u}_{{||}_p}\right>$.
+ \item Use the M-O velocity profile relationships \cite{Dyer:74} to
+   calculate an average friction velocity $u_\tau$.
+ \item Use the relationship (\ref{tau_s_useful}) to calculate the components of  $\left<
+   \mathbf{\tau}_s \right>$.
+ \item Calculate the local surface shear stress using~(\ref{moeng_bc}).
+\end{enumerate}
+
+Jacobian entries are required to populate the left-hand side matrix
+for the terms resulting from (\ref{moeng_bc}).  For convenience, we
+write the vector quantities as tensors with subscripts denoting the
+vector component indices.  We need an expression for the sensitivity
+of the shear stress, applied at the boundary face integration point,
+to the velocity components at the $l^{th}$ grid node, or
+$\dd{\tau_{s_i}^{(ip)}}{u_j^(l)}$.
+
+Differentiating (\ref{moeng_bc}) with respect to $\unod{j}$ gives
+\begin{equation} \label{sens1}
+  \dd{\tau_{s_i}^{(ip)}}{\unod{j}} =
+  \frac{\left<\tau_s^{(ip)}\right>_i}{\left<\utan^{(ip)}\right>}
+  \dd{\utan^{(ip)}}{\unod{j}} +
+  \frac{\left<\tau_s^{(ip)}\right>_i}{\left<{\utan}_i^{(ip)}\right>}\dd{{\utan}_i^{(ip)}}{\unod{j}}
+\end{equation}
+
+The first term involves a partial derivative of the tangential
+velocity magnitude, while the second term involves the partial
+derivative of the tangential velocity component.  Applying the chain
+rule to the first term gives
+\begin{equation} \label{sens2}
+ \dd{\utan^{(ip)}}{\unod{j}} = \frac{1}{\utan^{(ip)}}
+   {\utan}_k^{(ip)} \dd{{\utan}_k^{(ip)}}{\unod{j}},
+\end{equation}
+where summation is implied over the repeated index $k$.  The second
+partial derivative in (\ref{sens1}) is seen to appear also in
+(\ref{sens2}).  It remains to write an expression for this
+derivative, which is done by first writing the tangential velocity
+vector at the boundary face integration point in terms of the
+Cartesian velocity components:
+\begin{equation} \label{utan}
+{\utan}_i^{(ip)} = (1 - n_i n_j)\delta_{ij} u_i^{(ip)} - n_i n_j (1 -
+\delta_{ij}) u_j^{(ip)}
+\end{equation}
+with summation over the $j$ index.  The integration point velocity
+components are calculated from the face nodes using
+\begin{equation} \label{ipvel}
+ u_i^{(ip)} = \sum_{l=1}^{N_n} \phi^{(l)}(x_{ip})u_i^{(l)}
+\end{equation}
+Substituting (\ref{ipvel}) into (\ref{utan}), followed by (\ref{utan})
+into ({\ref{sens2}) gives
+\begin{equation}
+ \dd{\utan^{(ip)}}{\unod{j}} = \frac{1}{\utan^{(ip)}}
+   {\utan}_k^{(ip)} \sum_{j=1}^3 \sum_{l=1}^{N_n} (1 - n_i n_j)
+   \delta_{ij} \phi^{(l)}(x_{ip}) - n_i n_j (1 -
+   \delta_{ij})\phi^{(l)}(x_{ip})
+\end{equation}
 
 \subsection{Turbulent Kinetic Energy, $k_{sgs}$ LES model}
 When the boundary layer is assumed to be resolved, the natural boundary condition is a Dirichlet value of zero, 
