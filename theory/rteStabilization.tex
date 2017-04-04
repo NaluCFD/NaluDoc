@@ -115,8 +115,8 @@ Note that the first term in the above equation is integrated by parts,
 Again, the usage of $\Gamma$ provides emphasis that the contribution is a boundary (exposed face) condition. 
 Therefore, the full VMS-based stabilized RTE equation is as follows,
 \begin{eqnarray}
-   \int \left( -I\left(s\right) s_i \frac{\partial w}{\partial x_i} + (\mu_a + \mu_s) I\left(s\right) 
-- {{\mu_a \sigma T^4} \over {\pi}} -\frac{\mu_s}{4\pi}G \right) {\rm d}V  \nonumber \\
+   \int \left( -I\left(s\right) s_i \frac{\partial w}{\partial x_i} + w [(\mu_a + \mu_s) I\left(s\right) 
+- {{\mu_a \sigma T^4} \over {\pi}} -\frac{\mu_s}{4\pi}G ] \right) {\rm d}V  \nonumber \\
 + \int_\Gamma w s_i I\left(s\right) n_i {\rm d}S \nonumber \\
  +\int \tau s_j \frac{\partial w }{\partial x_j} R(s) {\rm d}V \nonumber \\
 +\alpha\int \tau w (\mu_a + \mu_s)R(s) {\rm d}V \nonumber \\
@@ -124,7 +124,7 @@ Therefore, the full VMS-based stabilized RTE equation is as follows,
 \label{rteDivFormSub}
 \end{eqnarray}
 
-\subsubsection{Definition of the test function}
+\subsubsection{Definition of the CVFEM test function}
 Following the work of Martinez,~\cite{Martinez:2005}, the test function is chosen to be a 
 piecewise-constant value within the control volume, $w = w_I$ and zero outside of this control volume (Heaviside).
 A key property of this function, as pointed out by Martinez, is that its
@@ -194,4 +194,17 @@ In the above equation, the ``advection operator'', $I\left(s\right) s_i n_i {\rm
 approximated as using the ``upwind'' intensity, e.g., if $s_j n_j$ is greater than zero, 
 the left nodal value is used.
 
+\subsection{Finite Element SUPG Form}
+For the FEM, the test function is the standard weighting. Assuming a pure SUPG formulation, i.e.,
+$\alpha = \beta = 0$ in Equation~\ref{rteDivFormSub}, thereby reducing the final form to the following:
 
+\begin{eqnarray}
+   \int \left( -I\left(s\right) s_i \frac{\partial w}{\partial x_i} + w[(\mu_a + \mu_s) I\left(s\right) 
+- {{\mu_a \sigma T^4} \over {\pi}} -\frac{\mu_s}{4\pi}G ] \right) {\rm d}V  \nonumber \\
++ \int_\Gamma w s_i I\left(s\right) n_i {\rm d}S \nonumber \\
+ +\int \tau s_j \frac{\partial w }{\partial x_j} R(s) {\rm d}V \nonumber \\
+\label{rteFemSUPG}
+\end{eqnarray}
+The weak boundary condition is applied in a similar manner as with the CVFEM and EBVC form, however,
+using the appropriate FEM test test function definition. Finally, the form of $\tau$ follows the above
+CVFEM form.
