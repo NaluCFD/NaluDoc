@@ -1,0 +1,58 @@
+\usepackage{color}
+\definecolor{BrickRed}{RGB}{200,26,26}
+\definecolor{cadetBlue}{RGB}{116,114,154}
+\definecolor{darkBlue}{RGB}{12,2,90}
+\definecolor{oliveGreen}{RGB}{60,128,49}
+\definecolor{grey}{rgb}{0.5,0.5,0.5}
+\usepackage{listings}
+\usepackage{courier}
+
+\newcommand{\code}[1]{\lstinline[basicstyle=\normalsize\color{black}\ttfamily]\!#1\!}
+
+\lstset{ 
+   %more info @ http://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
+    basicstyle=\scriptsize\ttfamily,
+    keywordstyle=\color{cadetBlue}\textbf,
+    stringstyle=\color{black},
+    commentstyle=\color{blue}\ttfamily,
+    numberstyle=\tiny\color{grey},
+    numbers=left,
+    numbersep=5pt,
+   	frame=b,
+    keepspaces=true,
+    extendedchars=true,
+    breaklines=true,
+    breakindent=60pt,
+    breakatwhitespace=true,
+    showspaces=false,
+    showtabs=false,
+    showstringspaces=false,
+    xleftmargin=17pt,
+    framexleftmargin=17pt,
+    framexrightmargin=5pt,
+    framexbottommargin=4pt
+    %tabsize=2,
+    %backgroundcolor=\color{lightgray},
+}
+
+%% Defines the default style used for emphasized keywords in listings.
+%%\newcommand\emphstyle{\color{BrickRed}\textbf}
+
+%%% Use the following to disable the emphasized keywords...
+\newcommand\emphstyle{\color{black}}
+
+
+\newcommand\indexstkio[1]{\index{{#1}}}
+
+\lstset{language=C++,morecomment=[l][\color{blue}\textbf]{//+}}
+\lstset{escapeinside={/*@}{*/}}
+
+\lstloadlanguages{C++}
+%\DeclareCaptionFont{blue}{\color{blue}} 
+
+%\captionsetup[lstlisting]{singlelinecheck=false, labelfont={blue}, textfont={blue}}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[cmyk]{0.43, 0.35, 0.35, 0.01}{
+\parbox{\textwidth-6pt}{\hspace{15pt} \centering #1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}

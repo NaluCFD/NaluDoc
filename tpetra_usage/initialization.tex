@@ -1,0 +1,94 @@
+%&LaTeX
+
+\chapter{Initialization}
+Each linear system assembly includes an initialization phase, where the
+degrees of freedom and decomposition are defined using Tpetra::Map, and
+connectivities are mapped to a compressed row storage (CRS) graph structure.
+The following list describes, with some pseudo-code, the broad sequence used
+to create and initialize the Tpetra objects. The code that implements these
+steps resides in the Nalu class \code{TpetraLinearSystem}.
+
+\begin{enumerate}
+\item Create owned and shared maps, and exporter to communicate between them.
+\begin{verbatim}
+  ownedRowsMap_ = new Map(ownedGlobalIds, ...);
+  sharedNotOwnedRowsMap_ = new Map(sharedNotOwnedGlobalIds, ...);
+  exporter_ = new Exporter(sharedNotOwnedRowsMap_,
+                           ownedRowsMap_);
+\end{verbatim}
+
+\item
+  Accumulate lists of connectivities defined by
+  element-node connections, etc. Currently these connectivity lists are stored
+  in a simple vector-of-vectors structure to represent the 'ragged table' of
+  node-to-node connections.
+
+\item
+  Using mesh information, determine row-lengths due to local connections and due
+  to contributions from neighbor processors (which share rows that we own, and
+  will thus contribute column-indices to some of our rows). The STK mesh structure
+  can tell us the list of neighboring MPI processors, i.e., the MPI processors
+  which have portions of the mesh which connect to the local MPI processor's
+  portion of the mesh.
+
+  We then traverse our connectivities and for each shared-but-not-owned entity
+  we send column entries to the graph on the MPI processor that owns the
+  entity. This enables us to compute exact row-lengths for each row in the
+  graph.
+
+  Note that this step, and the remaining initialization steps, are implemented
+  in the Nalu method \code{TpetraLinearSystem::finalizeLinearSystem()}.
+
+\item
+  Create and fill Kokkos::Views representing the local portion of the
+  compressed-sparse-row graphs. These are the \code{rowPointers}
+  and \code{columnIndices} arrays that will be passed into the
+  \code{Tpetra::CrsGraph::setAllIndices} method later. As an implementation
+  detail, during construction we hold these Kokkos::Views in a Nalu structure
+  called \code{LocalGraphArrays} and this object has methods for inserting
+  entries, etc.
+
+\item Construct column map.
+  Fill a list of ids representing the union of all column-entries 
+  that will be on the local processor. These ids are ordered as
+  follows.
+\begin{enumerate}
+  \item Owned: indices that the local processor owns.
+  \item Shared: indices that the local processor shares but doesn't own.
+  \item Remote: sometimes called 'reachable', these are indices that
+     are neither owned nor shared, but are connected to shared on
+     a neighboring processor. These indices are grouped by which
+     processor they come from.
+\end{enumerate}
+
+\begin{verbatim}
+  totalColsMap_ = new Map(colGlobalIds, ...);
+\end{verbatim}
+
+\item Construct Graphs.
+\begin{verbatim}
+  sharedNotOwnedGraph_ = new Graph(sharedNotOwnedRowsMap_,
+                                   totalColsMap_, ...);
+  ownedGraph_ = new Graph(ownedRowsMap_,
+                          totalColsMap_, ...);
+
+  ownedGraph_->setAllIndices(/* our computed local
+                                owned-graph indices */);
+  sharedNotOwnedGraph_->setAllIndices(/* our computed local
+                                         shared-graph indices */);
+
+  importer = new Import(ownedRowsMap_, non-owned-col-ids, source-pids);
+
+  ownedGraph_->expertStaticFillComplete(ownedRowsMap_,
+                            ownedRowsMap_, importer, ...);
+  sharedNotOwnedGraph_->expertStaticFillComplete(ownedRowsMap_,
+                                     ownedRowsMap_, importer, ...);
+\end{verbatim}
+
+\item Construct Matrices
+\begin{verbatim}
+  ownedMatrix_ = new Matrix(ownedGraph_);
+  sharedNotOwnedMatrix_ = new Matrix(sharedNotOwnedGraph_);
+\end{verbatim}
+\end{enumerate}
+

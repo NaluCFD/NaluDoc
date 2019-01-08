@@ -1,0 +1,69 @@
+%&LaTeX
+
+\chapter{Assembly}
+The linear system assembly phase is where matrix and rhs-vector contributions
+are added, using sum-into APIs.
+
+Nalu computes matrix and rhs-vector contributions in classes which are derived
+from the \code{Kernel} base-class. These kernels include computations such as
+continuity-advection, momentum-advection-diffusion, and many others. These kernels
+are called within an algorithm which manages mesh traversal, handles the gathering
+of field-data and master-element computations, etc. The following pseudo-code shows
+the execution or flow of these algorithms.
+
+\begin{verbatim}
+select buckets for part(s) that algorithm is applied to
+
+for each selected bucket {
+   ScratchViews scratch(gathered fields);
+
+   for each elem in bucket {
+        fill_scratch_views(scratch, ...);
+
+        for each active kernel {
+           kernel->execute(lhs, rhs, scratch);
+        }
+        sum_into_linear_system(lhs, rhs);
+    }
+}
+\end{verbatim}
+
+Note that in the above pseudo-code, \code{fill\_scratch\_views} includes both
+gathering needed field-data as well as making master-element calls such
+as grad-op, etc.
+
+Note also that significant detail has been omitted, such as the handling of
+SIMD sub-looping, interleaving the SIMD data, etc.  To see the actual algorithm code,
+see the Nalu classes \code{AssembleElemSolverAlgorithm},
+and \code{AssembleFaceElemSolverAlgorithm}.
+
+The \code{sum\_into\_linear\_system} step is where the computed coefficients are
+contributed to the linear-system. This is done by obtaining the local matrix from the
+\code{Tpetra::CrsMatrix} object using the method \code{getLocalMatrix()} and then
+summing directly into that. Similarly, rhs coefficients are summed into the \code{Kokkos::View}
+provided by the \code{getLocalView} method of \code{Tpetra::Vector}.
+
+Recall that we are operating on two matrix objects, \code{ownedMatrix\_} and
+\code{sharedNotOwnedMatrix\_}. During this sum-into process, coefficients are added
+to the appropriate matrix (and rhs-vector) depending on whether they are associated
+with an owned or shared mesh node. Once all local assembly is complete, the shared matrix
+is then communicated and added to the local matrix using \code{Tpetra} operations, called
+from within the Nalu method \code{TpetraLinearSystem::loadComplete()}:
+
+\begin{verbatim}
+sharedNotOwnedMatrix_->fillComplete();
+
+ownedMatrix_->doExport(*sharedNotOwnedMatrix_, *exporter, Tpetra::ADD);
+
+ownedMatrix_->fillComplete();
+
+ownedRhs_->doExport(*sharedNotOwnedRhs_, *exporter_, Tpetra::ADD);
+\end{verbatim}
+
+\section{Boundary condition enforcement}
+
+Dirichlet boundary conditions are enforced by modifying the appropriate rows
+of the assemled linear system before calling the linear-solver.
+
+Insert pseudo-code for dirichlet BC enforcement here.
+

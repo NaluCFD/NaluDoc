@@ -1,0 +1,375 @@
+\section{Performance Results}
+\label{s:results}
+In this section, performance results are provided for the Nalu code base
+using a variety of platforms including Haswell, KNL, and classic Sandy Bridge
+architectures.
+
+\subsection{Consolidated Design using Kokkos-based Computational Kernels}
+
+The performance improvements for the matrix assembly timings with the new Kokkos
+and SIMD enabled computations were benchmarked on the NERSC
+Cori\footnote{\url{http://www.nersc.gov/users/computational-systems/cori/configuration/}}
+machine. The code was benchmarked on both the Haswell and KNL partitions on the
+machine for the open-jet test case with the following meshes: 1) coarse
+low-order ($P=1$) mesh (17.5M \code{HEXAHEDRAL-8} elements); 2) fine low-order
+($P=1$) mesh (140M \code{HEXAHEDRAL-8} elements); and 3) a high-order ($P=2$)
+mesh obtained using element promotion of the coarse low-order mesh once ($17.5$M
+\code{HEXAHEDRAL-27} elements). The non-consolidated kernel design from the
+original Nalu source code was chosen as the baseline for performance
+comparisons. The performance was then benchmarked successively for various
+algorithmic design changes introduced in the code:
+
+\begin{description}
+\item[Hybrid] The default production run setup used in Nalu before ExaWind
+  project. This configuration is termed \emph{hybrid} because it mixes element
+  contributions and nodal source contributions while assembling the terms in the
+  Navier-Stokes equation. The hybrid method eliminates the necessity to perform
+  sub-control volume calculations that is necessary for the lumped-mass element
+  source terms that will be used in a pure element-based algorithm
+  implementation. While the matrix assembly timings of the \emph{hybrid}
+  implementation is not a correct baseline for evaluating the gains from
+  Kokkos-based threading and SIMD vectorization, it does however, provide an
+  estimate of the actual gains that a casual Nalu user might observe when moving
+  from the current release to the latest version used in this project.
+  Furthermore, a hybrid configuration does not provide design order of accuracy
+  for high-order meshes. Therefore, this configuration is only run for the
+  low-order meshes. A transition strategy to support nodal-based assembly
+  is captured in section~\ref{s:pathForward}.
+\item[Baseline B] Lumped mass element based source terms for consistent assembly
+  timing comparison with the consolidated algorithm design explored in this
+  study.
+\item[Configuration C1] Consolidated Kernel design using \code{ScratchViews} and element data
+  registration (Sec.~\ref{sec:scratchviews}). This configuration uses all the
+  terms used in the Baseline.
+\item[Configuration C2] Consolidated Kernels with SIMD datatype (i.e.,
+  \code{DoubleType} is set to \code{stk::simd::Double}) -- see
+  Sec.~\ref{sec:simd_vectorization}.
+\item[Configuration C3] Consolidated Kernels with SIMD on multiple OpenMP threads.
+\item[Configuration C4] Improvements to \emph{SIMD interleave} code and matrix \code{sumInto}
+  logic based on performance analysis using VTune from last step.
+\end{description}
+
+
+The matrix assembly times were compared for the four equation systems: momentum,
+continuity, turbulence kinetic energy (TKE), and mixture fraction.
+Tables~\ref{tab:haswell_assembly_timings} and \ref{tab:knl_assembly_timings}
+show the matrix assembly timings for the four equation systems on Cori's
+Haswell and KNL partitions respectively. Table~\ref{tab:run_conf} shows the MPI
+and OpenMP settings that were used for the various runs. To account for the
+differences in the clock speeds and machine architectures between Haswell and
+KNL, the simulations were performed on twice the number of MPI ranks on KNL as
+compared to Haswell. On most runs, the comparison is done on the basis of number
+of nodes instead of the same MPI ranks.
+
+\begin{table}[!htb]
+  \centering
+  \caption{Table showing the details of parallel execution (MPI ranks and OpenMP
+    threads) for the various code configuration results shown in this section.}
+  \label{tab:run_conf}
+  \begin{tabular}{l||r|r|r|r|r|r|r|r}
+    \hline\hline
+     & \multicolumn{4}{c|}{\textbf{Haswell}} & \multicolumn{4}{c}{\textbf{KNL}} \\ [0.5em]
+    Code & Num. & MPI & Ranks per & OMP & Nodes & MPI & Ranks per & OMP \\
+    Configuration & Nodes & ranks & node & Threads & Nodes & ranks & node & Threads\\ [1em]
+    \multicolumn{8}{l}{\textbf{Coarse $P=1$ mesh (17.5M HEX-8 elements)}} \\
+    \hline
+    Hybrid & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+    Baseline & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+    C1 & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+    C2 & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+    C3 & 10 & 160 & 16 & 2 & 5 & 320 & 64 & 2\\
+    C4 & 10 & 160 & 16 & 2 & 5 & 320 & 64 & 2\\ [1em]
+    \multicolumn{8}{l}{\textbf{Fine $P=1$ mesh (140M HEX-8 elements)}} \\
+    \hline
+    Hybrid & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    Baseline & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C1 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C2 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C3 & 80 & 1280 & 16 & 2 & 40 & 2560 & 64 & 2\\
+    C4 & 80 & 1280 & 16 & 2 & 40 & 2560 & 64 & 2\\ [1em]
+    \multicolumn{8}{l}{\textbf{Coarse $P=2$ mesh (17.5M HEX-27 elements)}} \\
+    \hline
+    Baseline & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C1 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C2 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+    C3 & 80 & 1280 & 16 & 2 & 80 & 2560 & 32 & 2\\
+    C4 & 80 & 1280 & 16 & 2 & 80 & 2560 & 32 & 2\\
+    \hline\hline
+  \end{tabular}
+\end{table}
+
+\begin{landscape}
+  \begin{table}[tb]
+    \centering
+    \caption{Matrix assembly timing comparisons on Haswell partition of NERSC Cori
+      system. Code configurations: H -- Hybrid element/node algorithm; B --
+      Baseline non-consolidated algorithm; C1 -- consolidated kernel algorithms; C2 --
+      C1 with SIMD datatypes; C3 -- C2 with OpenMP threading; C4 -- C3 with
+      \code{sumInto(...)} and SIMD interleave optimizations.}
+    \label{tab:haswell_assembly_timings}
+    \begin{tabular}{l|r|r|r|r|r|r|r|r|r|r|r|r|r}
+      \hline\hline
+      & \multicolumn{6}{c|}{Matrix assembly time (s)} & \multicolumn{7}{c}{Speedup ratio} \\[0.5em]
+      Equation & Hybrid & Baseline & Conf. C1 & Conf. C2 & Conf. C3 & Conf. C4 & B:C1 & C1:C2 & B:C2 & B:C3 & B:C4  & H:B & H:C4\\ [1em]
+      \multicolumn{10}{l}{\textbf{Coarse $P=1$ mesh (17.5M HEX-8 elements)}} \\
+      \hline
+      Momentum & 233.9 & 264.5 & 278.0 & 219.2 & 154.7 & 115.9 & 0.95 & 1.27 & 1.21 & 1.71 & 2.28 & 0.88 & 2.02\\
+      Continuity & 60.9 & 60.9 & 61.2 & 50.8 & 36.8 & 27.2 & 0.99 & 1.21 & 1.20 & 1.66 & 2.24 & 1.00 & 2.24\\
+      TKE & 70.1 & 93.2 & 94.3 & 70.1 & 52.2 & 41.9 & 0.99 & 1.34 & 1.33 & 1.78 & 2.23 & 0.75 & 1.67\\
+      Mix. Frac. & 68.8 & 91.7 & 86.6 & 62.5 & 45.9 & 36.1 & 1.06 & 1.38 & 1.47 & 2.00 & 2.54 & 0.75 & 1.91\\ [1em]
+      \multicolumn{10}{l}{\textbf{Fine $P=1$ mesh (140M HEX-8 elements)}} \\
+      \hline
+      Momentum & 246.9 & 277.8 & 290.1 & 228.8 & 161.1 & 118.2 & 0.96 & 1.27 & 1.21 & 1.72 & 2.35 & 0.89 & 2.09\\
+      Continuity & 64.4 & 64.4 & 65.1 & 54.4 & 38.5 & 28.9 & 0.99 & 1.20 & 1.18 & 1.67 & 2.23 & 1.00 & 2.23\\
+      TKE & 73.9 & 97.7 & 99.2 & 73.9 & 55.6 & 44.9 & 0.98 & 1.34 & 1.32 & 1.76 & 2.17 & 0.76 & 1.64\\
+      Mix. Frac. & 72.5 & 96.1 & 90.9 & 66.1 & 48.2 & 38.3 & 1.06 & 1.38 & 1.45 & 1.99 & 2.51 & 0.76 & 1.89\\ [1em]
+      \multicolumn{10}{l}{\textbf{Coarse $P=2$ mesh (17.5M HEX-27 elements)}} \\
+      \hline
+      Momentum & -- & 967.3 & 937.6 & 697.7 & 470.3 & 392.2 & 1.03 & 1.34 & 1.39 & 2.06 & 2.47 & -- & --\\
+      Continuity & -- & 249.4 & 201.1 & 172.0 & 118.9 & 95.5 & 1.24 & 1.17 & 1.45 & 2.10 & 2.61 & -- & --\\
+      TKE & -- & 254.5 & 277.1 & 257.9 & 157.6 & 132.7 & 0.92 & 1.07 & 0.99 & 1.61 & 1.92 & -- & --\\
+      Mix. Frac. & -- & 251.7 & 261.4 & 243.0 & 147.4 & 123.6 & 0.96 & 1.08 & 1.04 & 1.71 & 2.04 & -- & --\\
+      \hline\hline
+    \end{tabular}
+  \end{table}
+\end{landscape}
+
+\begin{landscape}
+  \begin{table}[tb]
+    \centering
+    \caption{Matrix assembly timing comparisons on KNL partition of NERSC Cori
+      system. Code configurations: H -- Hybrid element/node algorithm; B --
+      Baseline non-consolidated algorithm; C1 -- consolidated kernel algorithms; C2 --
+      C1 with SIMD datatypes; C3 -- C2 with OpenMP threading; C4 -- C3 with
+      \code{sumInto(...)} and SIMD interleave optimizations.}
+    \label{tab:knl_assembly_timings}
+    \begin{tabular}{l|r|r|r|r|r|r|r|r|r|r|r|r|r}
+      \hline\hline
+      & \multicolumn{6}{c|}{Matrix assembly time (s)} & \multicolumn{7}{c}{Speedup ratio} \\[0.5em]
+      Equation & Hybrid & Baseline & Conf. C1 & Conf. C2 & Conf. C3 & Conf. C4 & B:C1 & C1:C2 & B:C2 & B:C3 & B:C4  & H:B & H:C4\\ [1em]
+      \multicolumn{10}{l}{\textbf{Coarse $P=1$ mesh (17.5M HEX-8 elements)}} \\
+      \hline
+      Momentum & 329.6 & 398.0 & 473.0 & 352.0 & 250.7 & 203.1 & 0.84 & 1.34 & 1.13 & 1.59 & 1.96 & 0.83 & 1.62\\
+      Continuity & 91.7 & 91.7 & 98.1 & 73.3 & 54.2 & 41.1 & 0.94 & 1.34 & 1.25 & 1.69 & 2.23 & 1.00 & 2.23\\
+      TKE & 117.6 & 156.5 & 170.7 & 101.5 & 81.4 & 64.6 & 0.92 & 1.68 & 1.54 & 1.92 & 2.42 & 0.75 & 1.82\\
+      Mix. Frac. & 115.2 & 154.0 & 152.2 & 87.3 & 67.0 & 53.0 & 1.01 & 1.74 & 1.76 & 2.30 & 2.90 & 0.75 & 2.17\\ [1em]
+      \multicolumn{10}{l}{\textbf{Fine $P=1$ mesh (140M HEX-8 elements)}} \\
+      \hline
+      Momentum & 343.0 & 419.4 & 493.0 & 374.9 & 266.2 & 220.9 & 0.85 & 1.32 & 1.12 & 1.58 & 1.90 & 0.82 & 1.55\\
+      Continuity & 97.1 & 97.1 & 105.4 & 80.2 & 61.0 & 46.9 & 0.92 & 1.31 & 1.21 & 1.59 & 2.07 & 1.00 & 2.07\\
+      TKE & 123.8 & 165.7 & 184.6 & 114.9 & 94.3 & 76.8 & 0.90 & 1.61 & 1.44 & 1.76 & 2.16 & 0.75 & 1.61\\
+      Mix. Frac. & 121.6 & 163.3 & 162.6 & 96.7 & 76.4 & 61.5 & 1.00 & 1.68 & 1.69 & 2.14 & 2.66 & 0.74 & 1.98\\ [1em]
+      \multicolumn{10}{l}{\textbf{Coarse $P=2$ mesh (17.5M HEX-27 elements)}} \\
+      \hline
+      Momentum & -- & 1746.8 & 1642.3 & 894.0 & 456.2 & 379.4 & 1.06 & 1.84 & 1.95 & 3.83 & 4.60 & -- & --\\
+      Continuity & -- & 370.8 & 308.5 & 228.9 & 114.6 & 94.8 & 1.20 & 1.35 & 1.62 & 3.23 & 3.91 & -- & --\\
+      TKE & -- & 449.6 & 496.8 & 290.1 & 146.9 & 126.1 & 0.90 & 1.71 & 1.55 & 3.06 & 3.57 & -- & --\\
+      Mix. Frac. & -- & 446.0 & 461.0 & 276.9 & 140.2 & 119.7 & 0.97 & 1.67 & 1.61 & 3.18 & 3.73 & -- & --\\ [1em]
+      \hline\hline
+    \end{tabular}
+  \end{table}
+\end{landscape}
+
+\begin{enumerate}
+\item The consolidated algorithm design without any NGP enhancements (e.g., SIMD
+  and/or OpenMP threading) tend to be slower than both the hybrid and baseline 
+  non-consolidated assembly for the low-order simulations on Cori. The disparity
+  in performance between consolidated and hybrid simulations can be attributed 
+  to the use of only element-based algorithms in the consolidated design as compared 
+  to nodal source and time contributions terms employed in the baseline simulations.
+  Although the nodal approach involves a separate matrix assemble (along with a separate 
+  gather), it avoids a dual nodal volume calculation. However, for the simulation comparison 
+  between baseline and consolidated algorithm, the same connectivity graph is used. In fact,
+  the baseline includes extra field data gathers for coordinates and the independent
+  variables. This must be further explored in future milestone efforts. The Haswell
+  performance disparity seems more in line with what the team has seen on local 
+  institutional resources while the KNL data seems noteworthy.
+\item In contrast to low-order meshes, the high-order $P=2$ mesh matrix assembly
+  performance timings are on par with the non-consolidated approach. Here the
+  cost of element data gather is amoritized by the extra work performed by
+  computational kernels on each element.
+\item The introduction of SIMD vectorization recovers the loss in performance
+  from consolidated design on both machines for all equations except the
+  momentum equation on low-order meshes. However, on high-order mesh the
+  momentum equation assembly times show almost a 2x speedup on KNL. This can be
+  attributed to the wide vector width ($=8$) available on KNL cores. At this
+  point, it appears that the cost of interleaving and de-interleaving data for
+  multiple elements is sufficiently amoritized by processing 8 elements per
+  instruction, as compared to only 4 on Haswell.
+\item Activating OpenMP threading\footnote{The current study used two
+    OpenMP threads per MPI rank.} in conjunction with SIMD vectorization further
+  increases the gains observed on both machines, especially for the high-order
+  $P=2$ mesh where a factor of 3x speedup is observed on KNL machines.
+\end{enumerate}
+
+
+While the performance gains on low-order meshes have been quite modest, the
+situation is quite different for the higher-order mesh case, not just in terms
+of speedup factors but also the viability of a higher-order pathway in the
+ExaWind project. With the baseline non-consolidated approach, the higher order
+approach suffered approximately a $4-5\times$ runtime penalty on matrix assembly
+when compared to the fine low-order mesh. In contrast, the introduction of SIMD
+and OpenMP threading reduce this time difference to a factor of $2$ on KNL.
+Furthermore, the runtimes on KNL are slightly faster with the NGP code
+compared to Haswell. Of course, further performance studies are necessary to
+understand the tradeoffs associated with $P > 2$, and the point of diminishing
+returns with respect to the number of threads per MPI rank. However, the
+higher-order pathway on next-generation platforms certainly appears encouraging.
+
+\subsection{Code Timing Comparison Between Master and pre-ExaWind Version 1.1}
+In this brief section, a high level view of overall application code improvements made to 
+Nalu since the beginning of the ExaWind effort is provided. The performance test case is a 
+150 million element Vestas V27 (225 kw) wind turbine using a hybrid mesh (hexahedral, tetrahedral, wedge,
+and pyramid mesh topologies). The case is run on the Sandia institutional cluster, Sky Bridge (Cray-based
+2.6 GHz Sandy Bridge with infiniband interconnect). As has been described, the full master element topology transition
+is required for proper Kokkos-based kernel performance testing. As such, this benchmark between
+the master code base (09/2017) and version 1.1 (10/2016) is performed using the previously deployed
+algorithm implementation in Nalu. Therefore, the timings capture various improvements made to
+the Nalu::TpetraLinearSystem class over the year. Highlights of code changes agnostic to the new kernel
+design include transitioning to direct Kokkos calls in linear system assembly code and a new \code{sumInto()} 
+implementation.
+
+The V27 simulation timings, for purposes of this milestone, are restricted to matrix assembly only. However, 
+in general, overall simulation improvements are clear for this case involving parallel searches and the 
+DG/CVFEM non-conformal interface. In general, matrix assembly performance is now nearly 1.8 times faster 
+for momentum and scalar assembly. The recent re-write of the \code{sumInto()} method alone attributed a 1.2 
+times speed-up. This data suggests that as we improve the 
+underlying kernel design and Tpetra linear system interfaces, the application code base is continually 
+improving in peformance. Linear solver performance regressed a modest 3-5\% over the same development time 
+frame. Investigation into this slight regression is ongoing.
+
+\begin{comment}
+% BEGIN RECEIVE ORGTBL haswelltimings
+\begin{tabular}{lrrrrrrrrrrrrr}
+r3 &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & 233.9 & 264.5 & 278.0 & 219.2 & 154.7 & 115.9 & 0.95 & 1.27 & 1.21 & 1.71 & 2.28 & 0.88 & 2.02\\
+Continuity & 60.9 & 60.9 & 61.2 & 50.8 & 36.8 & 27.2 & 0.99 & 1.21 & 1.20 & 1.66 & 2.24 & 1.00 & 2.24\\
+TKE & 70.1 & 93.2 & 94.3 & 70.1 & 52.2 & 41.9 & 0.99 & 1.34 & 1.33 & 1.78 & 2.23 & 0.75 & 1.67\\
+Mix. Frac. & 68.8 & 91.7 & 86.6 & 62.5 & 45.9 & 36.1 & 1.06 & 1.38 & 1.47 & 2.00 & 2.54 & 0.75 & 1.91\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & \\
+r4 &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & 246.9 & 277.8 & 290.1 & 228.8 & 161.1 & 118.2 & 0.96 & 1.27 & 1.21 & 1.72 & 2.35 & 0.89 & 2.09\\
+Continuity & 64.4 & 64.4 & 65.1 & 54.4 & 38.5 & 28.9 & 0.99 & 1.20 & 1.18 & 1.67 & 2.23 & 1.00 & 2.23\\
+TKE & 73.9 & 97.7 & 99.2 & 73.9 & 55.6 & 44.9 & 0.98 & 1.34 & 1.32 & 1.76 & 2.17 & 0.76 & 1.64\\
+Mix. Frac. & 72.5 & 96.1 & 90.9 & 66.1 & 48.2 & 38.3 & 1.06 & 1.38 & 1.45 & 1.99 & 2.51 & 0.76 & 1.89\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & \\
+r3\(_{\text{p2}}\) &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & -- & 967.3 & 937.6 & 697.7 & 470.3 & 392.2 & 1.03 & 1.34 & 1.39 & 2.06 & 2.47 & -- & --\\
+Continuity & -- & 249.4 & 201.1 & 172.0 & 118.9 & 95.5 & 1.24 & 1.17 & 1.45 & 2.10 & 2.61 & -- & --\\
+TKE & -- & 254.5 & 277.1 & 257.9 & 157.6 & 132.7 & 0.92 & 1.07 & 0.99 & 1.61 & 1.92 & -- & --\\
+Mix. Frac. & -- & 251.7 & 261.4 & 243.0 & 147.4 & 123.6 & 0.96 & 1.08 & 1.04 & 1.71 & 2.04 & -- & --\\
+\end{tabular}
+% END RECEIVE ORGTBL haswelltimings
+
+#+ORGTBL: SEND haswelltimings orgtbl-to-latex
+| r3         |       |       |       |       |       |       |      |      |      |      |      |      |      |
+| Momentum   | 233.9 | 264.5 | 278.0 | 219.2 | 154.7 | 115.9 | 0.95 | 1.27 | 1.21 | 1.71 | 2.28 | 0.88 | 2.02 |
+| Continuity |  60.9 |  60.9 |  61.2 |  50.8 |  36.8 |  27.2 | 0.99 | 1.21 | 1.20 | 1.66 | 2.24 | 1.00 | 2.24 |
+| TKE        |  70.1 |  93.2 |  94.3 |  70.1 |  52.2 |  41.9 | 0.99 | 1.34 | 1.33 | 1.78 | 2.23 | 0.75 | 1.67 |
+| Mix. Frac. |  68.8 |  91.7 |  86.6 |  62.5 |  45.9 |  36.1 | 1.06 | 1.38 | 1.47 | 2.00 | 2.54 | 0.75 | 1.91 |
+|            |       |       |       |       |       |       |      |      |      |      |      |      |      |
+| r4         |       |       |       |       |       |       |      |      |      |      |      |      |      |
+| Momentum   | 246.9 | 277.8 | 290.1 | 228.8 | 161.1 | 118.2 | 0.96 | 1.27 | 1.21 | 1.72 | 2.35 | 0.89 | 2.09 |
+| Continuity |  64.4 |  64.4 |  65.1 |  54.4 |  38.5 |  28.9 | 0.99 | 1.20 | 1.18 | 1.67 | 2.23 | 1.00 | 2.23 |
+| TKE        |  73.9 |  97.7 |  99.2 |  73.9 |  55.6 |  44.9 | 0.98 | 1.34 | 1.32 | 1.76 | 2.17 | 0.76 | 1.64 |
+| Mix. Frac. |  72.5 |  96.1 |  90.9 |  66.1 |  48.2 |  38.3 | 1.06 | 1.38 | 1.45 | 1.99 | 2.51 | 0.76 | 1.89 |
+|            |       |       |       |       |       |       |      |      |      |      |      |      |      |
+| r3_p2      |       |       |       |       |       |       |      |      |      |      |      |      |      |
+| Momentum   |    -- | 967.3 | 937.6 | 697.7 | 470.3 | 392.2 | 1.03 | 1.34 | 1.39 | 2.06 | 2.47 |   -- |   -- |
+| Continuity |    -- | 249.4 | 201.1 | 172.0 | 118.9 |  95.5 | 1.24 | 1.17 | 1.45 | 2.10 | 2.61 |   -- |   -- |
+| TKE        |    -- | 254.5 | 277.1 | 257.9 | 157.6 | 132.7 | 0.92 | 1.07 | 0.99 | 1.61 | 1.92 |   -- |   -- |
+| Mix. Frac. |    -- | 251.7 | 261.4 | 243.0 | 147.4 | 123.6 | 0.96 | 1.08 | 1.04 | 1.71 | 2.04 |   -- |   -- |
+\end{comment}
+
+\begin{comment}
+% BEGIN RECEIVE ORGTBL knltimings
+\begin{tabular}{lrrrrrrrrrrrrr}
+r3 &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & 329.6 & 398.0 & 473.0 & 352.0 & 250.7 & 203.1 & 0.84 & 1.34 & 1.13 & 1.59 & 1.96 & 0.83 & 1.62\\
+Continuity & 91.7 & 91.7 & 98.1 & 73.3 & 54.2 & 41.1 & 0.94 & 1.34 & 1.25 & 1.69 & 2.23 & 1.00 & 2.23\\
+TKE & 117.6 & 156.5 & 170.7 & 101.5 & 81.4 & 64.6 & 0.92 & 1.68 & 1.54 & 1.92 & 2.42 & 0.75 & 1.82\\
+Mix. Frac. & 115.2 & 154.0 & 152.2 & 87.3 & 67.0 & 53.0 & 1.01 & 1.74 & 1.76 & 2.30 & 2.90 & 0.75 & 2.17\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & \\
+r4 &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & 343.0 & 419.4 & 493.0 & 374.9 & 266.2 & 220.9 & 0.85 & 1.32 & 1.12 & 1.58 & 1.90 & 0.82 & 1.55\\
+Continuity & 97.1 & 97.1 & 105.4 & 80.2 & 61.0 & 46.9 & 0.92 & 1.31 & 1.21 & 1.59 & 2.07 & 1.00 & 2.07\\
+TKE & 123.8 & 165.7 & 184.6 & 114.9 & 94.3 & 76.8 & 0.90 & 1.61 & 1.44 & 1.76 & 2.16 & 0.75 & 1.61\\
+Mix. Frac. & 121.6 & 163.3 & 162.6 & 96.7 & 76.4 & 61.5 & 1.00 & 1.68 & 1.69 & 2.14 & 2.66 & 0.74 & 1.98\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & \\
+r3\(_{\text{p2}}\) &  &  &  &  &  &  &  &  &  &  &  &  & \\
+Momentum & -- & 1746.8 & 1642.3 & 894.0 & 456.2 & 379.4 & 1.06 & 1.84 & 1.95 & 3.83 & 4.60 & -- & --\\
+Continuity & -- & 370.8 & 308.5 & 228.9 & 114.6 & 94.8 & 1.20 & 1.35 & 1.62 & 3.23 & 3.91 & -- & --\\
+TKE & -- & 449.6 & 496.8 & 290.1 & 146.9 & 126.1 & 0.90 & 1.71 & 1.55 & 3.06 & 3.57 & -- & --\\
+Mix. Frac. & -- & 446.0 & 461.0 & 276.9 & 140.2 & 119.7 & 0.97 & 1.67 & 1.61 & 3.18 & 3.73 & -- & --\\
+\end{tabular}
+% END RECEIVE ORGTBL knltimings
+
+#+ORGTBL: SEND knltimings orgtbl-to-latex
+| r3         |       |        |        |       |       |       |      |      |      |      |      |      |      |
+| Momentum   | 329.6 |  398.0 |  473.0 | 352.0 | 250.7 | 203.1 | 0.84 | 1.34 | 1.13 | 1.59 | 1.96 | 0.83 | 1.62 |
+| Continuity |  91.7 |   91.7 |   98.1 |  73.3 |  54.2 |  41.1 | 0.94 | 1.34 | 1.25 | 1.69 | 2.23 | 1.00 | 2.23 |
+| TKE        | 117.6 |  156.5 |  170.7 | 101.5 |  81.4 |  64.6 | 0.92 | 1.68 | 1.54 | 1.92 | 2.42 | 0.75 | 1.82 |
+| Mix. Frac. | 115.2 |  154.0 |  152.2 |  87.3 |  67.0 |  53.0 | 1.01 | 1.74 | 1.76 | 2.30 | 2.90 | 0.75 | 2.17 |
+|            |       |        |        |       |       |       |      |      |      |      |      |      |      |
+| r4         |       |        |        |       |       |       |      |      |      |      |      |      |      |
+| Momentum   | 343.0 |  419.4 |  493.0 | 374.9 | 266.2 | 220.9 | 0.85 | 1.32 | 1.12 | 1.58 | 1.90 | 0.82 | 1.55 |
+| Continuity |  97.1 |   97.1 |  105.4 |  80.2 |  61.0 |  46.9 | 0.92 | 1.31 | 1.21 | 1.59 | 2.07 | 1.00 | 2.07 |
+| TKE        | 123.8 |  165.7 |  184.6 | 114.9 |  94.3 |  76.8 | 0.90 | 1.61 | 1.44 | 1.76 | 2.16 | 0.75 | 1.61 |
+| Mix. Frac. | 121.6 |  163.3 |  162.6 |  96.7 |  76.4 |  61.5 | 1.00 | 1.68 | 1.69 | 2.14 | 2.66 | 0.74 | 1.98 |
+|            |       |        |        |       |       |       |      |      |      |      |      |      |      |
+| r3_p2      |       |        |        |       |       |       |      |      |      |      |      |      |      |
+| Momentum   |    -- | 1746.8 | 1642.3 | 894.0 | 456.2 | 379.4 | 1.06 | 1.84 | 1.95 | 3.83 | 4.60 |   -- |   -- |
+| Continuity |    -- |  370.8 |  308.5 | 228.9 | 114.6 |  94.8 | 1.20 | 1.35 | 1.62 | 3.23 | 3.91 |   -- |   -- |
+| TKE        |    -- |  449.6 |  496.8 | 290.1 | 146.9 | 126.1 | 0.90 | 1.71 | 1.55 | 3.06 | 3.57 |   -- |   -- |
+| Mix. Frac. |    -- |  446.0 |  461.0 | 276.9 | 140.2 | 119.7 | 0.97 | 1.67 | 1.61 | 3.18 | 3.73 |   -- |   -- |
+\end{comment}
+
+\begin{comment}
+% BEGIN RECEIVE ORGTBL rundetails
+\begin{tabular}{l||r|r|r|r||r|r|r|r}
+Code & \multicolumn{4}{c}{Haswell} & \multicolumn{4}{c}{KNL} \\
+Configuration & Nodes & MPI ranks & Ranks/node & OMP Threads & Nodes & MPI ranks & Ranks/node & OMP Threads\\
+Hybrid & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+Baseline & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+C1 & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+C2 & 5 & 160 & 32 & 1 & 5 & 320 & 64 & 1\\
+C3 & 10 & 160 & 16 & 2 & 5 & 320 & 64 & 2\\
+C4 & 10 & 160 & 16 & 2 & 5 & 320 & 64 & 2\\
+ &  &  &  &  &  &  &  & \\
+Hybrid & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+Baseline & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C1 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C2 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C3 & 80 & 1280 & 16 & 2 & 40 & 2560 & 64 & 2\\
+C4 & 80 & 1280 & 16 & 2 & 40 & 2560 & 64 & 2\\
+ &  &  &  &  &  &  &  & \\
+Baseline & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C1 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C2 & 40 & 1280 & 32 & 1 & 40 & 2560 & 64 & 1\\
+C3 & 80 & 1280 & 16 & 2 & 80 & 2560 & 32 & 2\\
+C4 & 80 & 1280 & 16 & 2 & 80 & 2560 & 32 & 2\\
+\end{tabular}
+% END RECEIVE ORGTBL rundetails
+
+#+ORGTBL: SEND rundetails orgtbl-to-latex
+| Configuration | Nodes | MPI ranks | Ranks/node | OMP Threads | Nodes | MPI ranks | Ranks/node | OMP Threads |
+| Hybrid        |     5 |       160 |         32 |           1 |     5 |       320 |         64 |           1 |
+| Baseline      |     5 |       160 |         32 |           1 |     5 |       320 |         64 |           1 |
+| C1            |     5 |       160 |         32 |           1 |     5 |       320 |         64 |           1 |
+| C2            |     5 |       160 |         32 |           1 |     5 |       320 |         64 |           1 |
+| C3            |    10 |       160 |         16 |           2 |     5 |       320 |         64 |           2 |
+| C4            |    10 |       160 |         16 |           2 |     5 |       320 |         64 |           2 |
+|               |       |           |            |             |       |           |            |             |
+| Hybrid        |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| Baseline      |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C1            |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C2            |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C3            |    80 |      1280 |         16 |           2 |    40 |      2560 |         64 |           2 |
+| C4            |    80 |      1280 |         16 |           2 |    40 |      2560 |         64 |           2 |
+|               |       |           |            |             |       |           |            |             |
+| Baseline      |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C1            |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C2            |    40 |      1280 |         32 |           1 |    40 |      2560 |         64 |           1 |
+| C3            |    80 |      1280 |         16 |           2 |    80 |      2560 |         32 |           2 |
+| C4            |    80 |      1280 |         16 |           2 |    80 |      2560 |         32 |           2 |
+\end{comment}

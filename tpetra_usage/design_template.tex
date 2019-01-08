@@ -1,0 +1,144 @@
+% $Revision: 1.8 $
+% $Date: 2008/06/23 19:04:15 $
+\makeindex
+\documentclass[11pt]{article}
+\makeindex
+%\usepackage[nomarkers,nolists]{endfloat}
+\usepackage{overcite}
+\bibliographystyle{biblio}
+\usepackage{epsfig}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{xr}
+
+%%% two definitions of \Comment. The first displays them. The
+%%% second does not. Uncomment one.
+\newcommand{\Comment}[1]{
+{\noindent\color{red}\fbox{\em \begin{minipage}[t]{5in}#1
+\end{minipage}}\color{black}}}
+%\newcommand{\Comment}[1]{}
+\externaldocument[U:]{users}
+\externaldocument[V:]{verification}
+
+\begin{document}
+\section{Design Document Template}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+\Comment{ The following is a design template to assist in building a design
+ document. It lists the critical elements of the design, but is not
+ intended to be limiting, i.e. you may want to add a lot more to it than
+ is found here. There are many ways to describe these design issues
+ including nice things like UML. The format is not that critical, but it
+ is critical that the essential information be included.
+
+\centerline{\rule{5in}{1pt}}
+
+\noindent
+ Generally these completed templates will be inserted into our
+ programmers notes.}
+
+\subsection{Purpose of this Section}
+The design document is intended to accomplish the following.
+\begin{enumerate}
+\item
+Capture the ideas behind an implementation.
+\item
+List reasons and motivations for the implementation decisions.
+\item
+Provide training for other developers who may want to modify or
+interface to the software.
+\end{enumerate}
+
+\subsection{Requirements Summary}
+\Comment{One paragraph summary of the purpose of this work. It
+may certainly reference other documentation such as theory manual.}
+
+\subsection{Key Stakeholders}
+\Comment{Who will test and use this software.}
+
+\subsection{User Interface}
+\Comment{Will the software require changes to the user input?}
+
+\subsection{Theory}
+\Comment{What is the theory behind this development? If it is well
+understood, are there good references? What should be added to the theory
+manual at completion?}
+
+\subsection{Data Structures}
+
+\Comment{A DETAILED description of the data structures that you will use
+to store the program's data.  Describe in detail what data needs
+to be stored and how it will be stored (e.g., binary trees, hash
+tables, queues, arrays, linked-lists, etc.).  Also explain {\em
+why} you chose the data structures that you did.}
+
+
+\subsection{Class Descriptions}
+\Comment{For each class in your design, document the following:
+
+\begin{itemize}
+\item
+    The name and purpose of the class
+\item
+    The name and purpose of each data member
+\item
+    The name and purpose of each method.  For each method, document each of its parameters and its return value.
+\end{itemize}
+
+One way to document this information is to create a commented
+header file (.H file) for each of your classes.  List the classes
+here, and ensure that each of the class headers contains the
+information above.} %% end comment
+
+\subsection{Algorithms}
+
+\Comment{A DETAILED description of how your program will work.  Describe
+how the objects in your design will work together to implement
+the functionality.  Describe the flow of your program from
+beginning to end, including initialization, parsing, etc.
+Explain the core algorithms of your program, including how
+control will flow from one method to another.  Explain how you
+will handle the various error conditions.
+
+There may be some other design trade-offs. 
+
+This can be documented in a variety of ways. A flowchart or UML
+diagram is often of value.}
+
+\subsubsection{Parallelization Issues}
+
+\subsection{Interfaces}
+\Comment{Most of the software design we effect must interact with
+other systems. Describe this here in as much detail as is
+possible.}
+
+\subsection{Testing Issues}
+
+
+\subsection{Verification}
+
+\begin{table}[ht]
+\centerline{
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\bf Analytic & \bf Verification & \bf Tested & \bf Parallel & \bf User \\
+\bf Reference & \bf Section     &            & \bf Test     & \bf Test \\
+\hline
+             &                  &            &              &          \\
+\hline
+\end{tabular}
+}
+\caption{Verification Summary}
+%\label{tbl:blah:status}
+\end{table}
+
+\subsection{Post-Mortem. Surprises in the Implementation}
+
+\subsection{References}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+  
+
