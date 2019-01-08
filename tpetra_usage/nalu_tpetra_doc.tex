@@ -1,0 +1,319 @@
+\documentclass[12pt,report,strict,blank]{SANDreport}
+%\input{pagestyle} %Latex doesn't allow both class and style defined.
+
+
+\usepackage{mathptmx}              %Use Times for serif font
+%\usepackage[T1]{fontenc}           %This font encoding uses a real underscore
+                                   %character that can be searched for in the
+                                   %pdf file
+\usepackage[scaled=0.92]{helvet}   %Use helvetica for sans serif font
+\usepackage{amsmath,amssymb,amsfonts} % Typical math resource packages
+%\usepackage{graphicx}                 % Packages to allow inclusion of graphics
+%\usepackage{graphics}  
+\usepackage{color}                    % For creating coloured text and background
+\usepackage{array}
+\usepackage{paralist}
+
+\usepackage{multicol}
+\usepackage{subfig}
+ 
+\usepackage{xtab}
+\usepackage{makeidx}
+\usepackage{alltt}
+\usepackage{enumitem}
+
+%\usepackage{epstopdf}
+
+%\usepackage{verbatim}
+%\usepackage{sandcover}
+%\usepackage{markchange}
+
+%\usepackage{subfig}
+\usepackage{epsfig}
+%\usepackage{xtab}
+%\usepackage{makeidx}
+%\usepackage[square,numbers,sectionbib]{natbib}
+%\usepackage{chapterbib}
+
+%Math symbols:
+\usepackage{mathrsfs}
+
+%The url package provides the version of path used here.  It's critical that
+%this get loaded before hyperref because hyperref provides its own path
+%command that doesn't work correctly.  Also, \cmd needs to be defined before
+%hyperref is loaded too, for the same reason.
+\usepackage[obeyspaces,spaces]{url} 
+
+\pdfminorversion=5
+\usepackage[pdftex]{hyperref}
+\hypersetup{
+            colorlinks,
+            citecolor=blue,
+            filecolor=blue,
+            linkcolor=blue,
+            urlcolor=blue
+            }
+%\usepackage[dvips, bookmarks, bookmarksnumbered, colorlinks=true, 
+%            plainpages = false, citecolor = green, linkcolor=blue,
+%            urlcolor=blue, filecolor = blue]{hyperref}
+
+\usepackage{html} 
+\usepackage[all]{hypcap}
+
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{listings}
+
+%\begin{htmlonly}
+%\renewcommand{\SANDnum}[1]{\newcommand{\SANDnumVar}{#1}\setboolean{SANDnumProvided}{true}}
+%\renewcommand{\SANDauthor}[1]{\newcommand{\SANDauthorVar}{#1}\setboolean{SANDauthorProvided}{true}}
+%\renewcommand{\SANDprintDate}[1]{\newcommand{\SANDprintDateVar}{#1}\setboolean{SANDprintDateProvided}{true}}
+%\end{htmlonly}
+
+%Master switch to control whether this is a release version.
+\newif\ifrelease
+\releasefalse
+
+%This turns on printing of DRAFT across pages
+%\newif\ifdraft
+%\ifrelease\draftfalse\else\drafttrue\fi
+
+%This turns on the SAND report covers
+%\newif\ifsand
+%\ifrelease\sandtrue\else\sandfalse\fi
+
+
+\newcommand{\repositoryupdate}{}
+\include{repository_update}  %If present, this file sets the date of the last change to the repository
+
+\begin{latexonly}
+
+\end{latexonly}
+
+%\ifdraft
+\usepackage[firsttwo,bottomafter]{draftcopy}
+%\fi
+
+\usepackage{verbatim}
+%\captionsetup[lstlisting]{ format=listing, labelfont=white, textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize} }
+
+%This avoids having the leading "0." in the section numbers that we get
+%because we don't have a chapter
+%\def\thesection{\arabic{section}}
+
+
+% Set left margin and counter
+\setlength{\oddsidemargin}{0.0in}
+\setlength{\evensidemargin}{0.0in}
+%\setlength{\evensidemargin}{0.25in}
+\setcounter{secnumdepth}{10}
+\setcounter{tocdepth}{3}
+
+% Set width of the text 
+\setlength{\textwidth}{6.5in}
+
+% Set top margin
+\setlength{\topmargin}{-0.5in}
+
+% Set height of the text
+\setlength{\textheight}{9.0in}
+
+%no indenting for any paragraphs
+\setlength{\parindent}{0in}
+
+
+% set tolerance for large spaces between words (affects hyphen)
+\tolerance=10000
+\vbadness=10000
+\hbadness=10000
+
+% 10/29/07: Revised to cause spacing between paragraphs, as in original document
+\parskip 0.2cm
+
+\renewcommand{\floatpagefraction}{0.7}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+
+\newcommand{\bs}{\boldsymbol}
+
+\newcommand{\ttlbrace}{{\tt \char`\{}}
+\newcommand{\ttrbrace}{{\tt \char`\}}}
+
+\begin{htmlonly}
+\renewcommand{\href}[2]{\htmladdnormallink{#2}{#1}}
+%\renewcommand{\cmd}[1]{\path{#1}}
+\renewcommand{\cmd}[1]{\begin{rawhtml}<tt>\end{rawhtml}\path{#1 }\begin{rawhtml}</tt>\end{rawhtml}}
+\renewcommand{\displaycmd}[1]{\hspace*{.22in}\begin{rawhtml}<tt>\end{rawhtml}\path{#1 }\begin{rawhtml}</tt>\end{rawhtml}}
+\end{htmlonly}
+
+\def\SNLA{Sandia National Laboratories, Albuquerque, NM}
+
+
+%% \newcommand\TODO[1]{}
+\newcommand\TODO[1]{#1}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+%
+% Standardize list spacing in this document
+%
+
+% Each item fits well within one line
+
+\newlength{\shortitemitemsep}
+\setlength{\shortitemitemsep}{2pt}
+
+\newenvironment{itemizeshort}
+{ \begin{itemize}[nolistsep, itemsep=\shortitemitemsep] }
+{ \end{itemize} }
+
+\newenvironment{enumerateshort}
+{ \begin{enumerate}[nolistsep, itemsep=\shortitemitemsep] }
+{ \end{enumerate} }
+
+\newenvironment{descriptionshort}
+{ \begin{description}[nolistsep, itemsep=\shortitemitemsep] }
+{ \end{description} }
+
+% At least one item requires more than one line,
+% or most mostly fill a line.
+
+\newlength{\longitemitemsep}
+\setlength{\longitemitemsep}{2pt}
+\newlength{\longitemparsep}
+\setlength{\longitemparsep}{4pt}
+
+\newenvironment{itemizelong}
+{ \begin{itemize}[nolistsep, itemsep=\longitemitemsep, parsep=\longitemparsep] }
+{ \end{itemize} }
+
+\newenvironment{enumeratelong}
+{ \begin{enumerate}[nolistsep, itemsep=\longitemitemsep, parsep=\longitemparsep] }
+{ \end{enumerate} }
+
+\newenvironment{descriptionlong}
+{ \begin{description}[nolistsep, itemsep=\longitemitemsep, parsep=\longitemparsep] }
+{ \end{description} }
+
+\newcommand\ManualAuthorsList{
+  Stefan Domino and Alan Williams\\
+}
+\newcommand\ManualDate{\today}
+
+\title{Nalu's Linear System Assembly using Tpetra}
+\author{
+  \ManualAuthorsList \\
+  Sandia National Laboratories \\
+  P.O. Box 5800 \\
+  Albuquerque, NM 87185
+}
+\date{\ManualDate}
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2019-0120}
+\SANDprintDate{\ManualDate}
+\SANDauthor{\ManualAuthorsList}
+% commenting the following line will activate the approved markCover instead
+\SANDmarkCover{Approved for public release; further dissemination unlimited.}
+%\SANDmarkCover{Not approved for public release}
+% ---------------------------------------------------------------------------- %
+% The following definitions are optional. The values shown are the default
+% ones provided by SANDreport.cls
+%
+\SANDreleaseType{Unlimited Release}
+%\SANDreleaseType{\textbf{UNCLASSIFIED - DO NOT DISTRIBUTE}}
+
+\newcommand{\keyword}[1]{\lowercase{\index{#1}}{\em #1}}
+
+%\newcommand{\testFile}[2]{{#1} $\quad$ {#1}}
+
+\newcommand{\docTest}[3]{
+\lstinputlisting[
+	includerangemarker=false,linerange=//BEGIN#2-//END#2,
+	label={#2},
+	caption={[ {#3} ] {#3} \lstname  }]
+	{#1}
+}
+
+%\newcommand{\codelst}{\begingroup
+%  \catcode`_=12 \docodelst}
+%\newcommand{\docodelst}[1]{%
+%  \lstinputlisting[caption=\texttt{#1}]{#1}%
+%  \endgroup
+%}
+
+\makeindex
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+  The Nalu Exascale Wind application assembles linear systems using data
+  structures provided by the Tpetra package in Trilinos. This note describes
+  the initialization and assembly process. The purpose of this note is to help
+  Nalu developers and maintainers to understand the code surrounding linear
+  system assembly, in order to facilitate debugging, optimizations, and
+  maintenance.
+  \footnote{Sandia National 
+  Laboratories is a multimission laboratory managed and operated by National Technology 
+  and Engineering Solutions of Sandia, LLC., a wholly owned subsidiary of Honeywell 
+  International, Inc., for the U.S. Department of Energy's National Nuclear Security 
+  Administration under contract DE-NA0003525. This report followed the Sandia National 
+  Laboratories formal review and approval process (SAND2019-0120), 
+  and is suitable for unlimited release.}
+
+\end{abstract}
+\cleardoublepage
+\tableofcontents
+%\lstlistoflistings
+%\listoffigures
+%\listoftables
+\SANDmain
+%\include{frontmatter}
+
+%\pagestyle{plain}
+%\begin{latexonly}
+%\cleardoublepage
+%\end{latexonly}
+
+\include{overview}
+\include{initialization}
+\include{assembly}
+
+\include{index}
+\refstepcounter{chapter}
+\addcontentsline{toc}{chapter}{Index}
+\begin{raggedright}
+\begin{footnotesize}
+\printindex
+\end{footnotesize}
+\end{raggedright}
+%\include{endmatter}
+
+%
+% Comment out distribution list for drafts. 
+%
+\begin{SANDdistribution}[NM]% or [CA]
+  % \SANDdistCRADA	% If this report is about CRADA work
+  % \SANDdistPatent	% If this report has a Patent Caution or Patent Interest
+  % \SANDdistLDRD	% If this report is about LDRD work
+
+  % External Address Format: {num copies}{Address}
+  % \SANDdistExternal{1}{}
+  % \bigskip
+
+  % The following MUST BE between the external and internal distributions!
+  % \SANDdistClassified % If this report is classified
+
+  % Internal Address Format: {num copies}{Mail stop}{Name}{Org}
+
+  % Mail Channel Address Format: {num copies}{Mail Channel}{Name}{Org}
+  %\SANDdistInternalM{}{}{}{}
+\end{SANDdistribution}
+
+\end{document}
